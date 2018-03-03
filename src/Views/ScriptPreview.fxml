@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane id="AnchorPane" maxHeight="500.0" maxWidth="400.0" minHeight="500.0" minWidth="400.0" prefHeight="500.0" prefWidth="400.0" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controllers.ScriptPreviewController">
+   <children>
+      <BorderPane layoutX="10.0" layoutY="10.0" maxHeight="600.0" maxWidth="400.0" minHeight="500.0" minWidth="400.0" prefHeight="500.0" prefWidth="400.0" style="-fx-background-color: RGB(214,214,214)RGB(214,214,214);" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <top>
+            <Pane maxHeight="70.0" maxWidth="400.0" minHeight="70.0" minWidth="400.0" prefHeight="70.0" prefWidth="400.0" style="-fx-background-color: RGB(143,143,143);">
+               <BorderPane.margin>
+                  <Insets />
+               </BorderPane.margin>
+               <children>
+                  <Label text="Script Preview" textFill="WHITE">
+                     <padding>
+                        <Insets left="10.0" top="30.0" />
+                     </padding>
+                     <font>
+                        <Font size="17.0" />
+                     </font>
+                  </Label>
+               </children>
+            </Pane>
+         </top>
+         <bottom>
+            <ButtonBar maxHeight="50.0" maxWidth="400.0" minHeight="50.0" minWidth="400.0" prefHeight="50.0" prefWidth="400.0" style="-fx-background-color: RGB(221,221,221);" BorderPane.alignment="CENTER">
+               <buttons>
+                  <ProgressIndicator fx:id="loadingIndicator" maxHeight="35.0" minHeight="35.0" prefHeight="35.0" visible="false" />
+                  <Button fx:id="submit" maxWidth="30.0" minWidth="30.0" mnemonicParsing="false" onAction="#submit" prefWidth="30.0" text="Submit" translateX="-10.0" translateY="4.0" />
+               </buttons>
+            </ButtonBar>
+         </bottom>
+         <center>
+            <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
+               <children>
+                  <TextArea fx:id="scriptPreviewField" maxHeight="380.0" maxWidth="400.0" minHeight="380.0" minWidth="400.0" prefHeight="380.0" prefWidth="400.0" />
+               </children>
+            </VBox>
+         </center>
+      </BorderPane>
+   </children>
+</AnchorPane>

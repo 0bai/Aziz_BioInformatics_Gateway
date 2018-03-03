@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.cell.PropertyValueFactory?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane maxHeight="700.0" maxWidth="1200.0" minHeight="600.0" minWidth="800.0" prefHeight="700.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <VBox layoutX="10.0" layoutY="10.0" maxHeight="700.0" maxWidth="1200.0" minHeight="600.0" minWidth="800.0" prefHeight="700.0" prefWidth="1200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <children>
+                <MenuBar VBox.vgrow="NEVER">
+                    <menus>
+                        <Menu mnemonicParsing="false" text="File">
+                            <items>
+                                <MenuItem mnemonicParsing="false" text="Close" />
+                            </items>
+                        </Menu>
+                        <Menu mnemonicParsing="false" text="Edit">
+                            <items>
+                                <MenuItem mnemonicParsing="false" text="Add" />
+                                <MenuItem mnemonicParsing="false" text="Delete" />
+                            </items>
+                        </Menu>
+                        <Menu mnemonicParsing="false" text="Help">
+                            <items>
+                                <MenuItem mnemonicParsing="false" text="About" />
+                            </items>
+                        </Menu>
+                    </menus>
+                </MenuBar>
+                <TableView id="jobsTable" fx:id="jobsTable" prefHeight="678.0" prefWidth="1200.0" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn id="Id" editable="false" prefWidth="66.0" text="ID">
+                            <cellValueFactory>
+                                <PropertyValueFactory property="Id" />
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn id="Name" editable="false" prefWidth="93.0" text="Name">
+                         <cellValueFactory>
+                                <PropertyValueFactory property="Name" />
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn id="DateCreated" editable="false" prefWidth="163.0" text="Date Created">
+                             <cellValueFactory>
+                                <PropertyValueFactory property="DateCreated" />
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn id="Status" editable="false" prefWidth="227.0" text="Status">
+                             <cellValueFactory>
+                                <PropertyValueFactory property="Status" />
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn id="CpuTime" editable="false" prefWidth="145.0" text="CPU Time">
+                             <cellValueFactory>
+                                <PropertyValueFactory property="CpuTime" />
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn id="WallTime" editable="false" prefWidth="149.0" text="Wall Time">
+                             <cellValueFactory>
+                                <PropertyValueFactory property="WallTime" />
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn id="CPUs" editable="false" minWidth="0.0" prefWidth="126.0" text="#CPUs">
+                             <cellValueFactory>
+                                <PropertyValueFactory property="CPUs" />
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn id="Nodes" editable="false" prefWidth="250.0" text="#Nodes">
+                             <cellValueFactory>
+                                <PropertyValueFactory property="Nodes" />
+                            </cellValueFactory>
+                        </TableColumn>
+                    </columns>
+                </TableView>
+                <Pane fx:id="pane" maxHeight="40.0" maxWidth="1200.0" minHeight="40.0" minWidth="800.0" prefHeight="40.0" prefWidth="1200.0" VBox.vgrow="NEVER">
+                    <VBox.margin>
+                        <Insets />
+                    </VBox.margin>
+                    <children>
+                        <Button fx:id="Add" layoutX="25.0" layoutY="5.0" maxHeight="30.0" maxWidth="100.0" minHeight="30.0" minWidth="100.0" mnemonicParsing="false" onAction="#newJob" prefHeight="30.0" prefWidth="100.0" text="Add" />
+                        <Button fx:id="delete" layoutX="152.0" layoutY="5.0" maxHeight="30.0" maxWidth="100.0" minHeight="30.0" minWidth="100.0" mnemonicParsing="false" onAction="#deleteJob" prefHeight="30.0" prefWidth="100.0" text="Delete" textAlignment="CENTER">
+                            <opaqueInsets>
+                                <Insets />
+                            </opaqueInsets>
+                        </Button>
+                        <ProgressIndicator fx:id="progressIndicator" depthTest="DISABLE" layoutX="1170.0" layoutY="8.0" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" prefHeight="25.0" prefWidth="25.0" snapToPixel="false" visible="false" />
+                    </children>
+                </Pane>
+            </children>
+        </VBox>
+    </children>
+</AnchorPane>

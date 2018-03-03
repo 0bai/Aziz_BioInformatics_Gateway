@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<GridPane alignment="CENTER" maxHeight="129.0" maxWidth="309.0" minHeight="129.0" minWidth="309.0" prefHeight="129.0" prefWidth="309.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <Label prefHeight="41.0" prefWidth="113.0" text="User Name">
+            <GridPane.margin>
+                <Insets left="5.0" />
+            </GridPane.margin>
+        </Label>
+        <Label prefHeight="143.0" prefWidth="300.0" text="Password" GridPane.rowIndex="1">
+            <GridPane.margin>
+                <Insets left="5.0" />
+            </GridPane.margin>
+        </Label>
+        <TextField id="usernameTF" fx:id="usernameTF" promptText="Username"  GridPane.columnIndex="1">
+            <GridPane.margin>
+                <Insets right="10.0" />
+            </GridPane.margin>
+        </TextField>
+        <PasswordField fx:id="passwordF" prefHeight="27.0" prefWidth="101.0" promptText="Password" GridPane.columnIndex="1" GridPane.rowIndex="1">
+            <GridPane.margin>
+                <Insets right="10.0" />
+            </GridPane.margin>
+        </PasswordField>
+        <Button id="signInBT" fx:id="signInBT" alignment="CENTER" contentDisplay="RIGHT" defaultButton="true" mnemonicParsing="false" onAction="#SignIn" prefHeight="27.0" prefWidth="74.0" text="Sign In" textAlignment="CENTER" GridPane.columnIndex="1" GridPane.rowIndex="2">
+            <GridPane.margin>
+                <Insets bottom="10.0" left="70.0" top="25.0" />
+            </GridPane.margin>
+        </Button>
+        <Button id="Cancel" fx:id="cancelBT" alignment="CENTER" cancelButton="true" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#cancelM" prefHeight="27.0" prefWidth="74.0" text="Cancel" textAlignment="CENTER" GridPane.columnSpan="2" GridPane.rowIndex="2">
+            <GridPane.margin>
+                <Insets bottom="10.0" left="230.0" right="10.0" top="25.0" />
+            </GridPane.margin>
+        </Button>
+      <ProgressIndicator fx:id="progressIndicator" visible="false" GridPane.columnIndex="1" GridPane.rowIndex="2">
+         <GridPane.margin>
+            <Insets bottom="6.0" right="150.0" top="20.0" />
+         </GridPane.margin>
+      </ProgressIndicator>
+    </children>
+    <columnConstraints>
+        <ColumnConstraints hgrow="SOMETIMES" maxWidth="296.0" minWidth="10.0" prefWidth="78.0" />
+        <ColumnConstraints hgrow="SOMETIMES" maxWidth="528.0" minWidth="10.0" prefWidth="231.0" />
+    </columnConstraints>
+    <rowConstraints>
+        <RowConstraints maxHeight="129.0" minHeight="0.0" prefHeight="41.0" vgrow="SOMETIMES" />
+        <RowConstraints maxHeight="267.0" minHeight="0.0" prefHeight="31.0" vgrow="SOMETIMES" />
+        <RowConstraints maxHeight="348.0" minHeight="10.0" prefHeight="57.0" vgrow="SOMETIMES" />
+    </rowConstraints>
+   <padding>
+      <Insets top="10.0" />
+   </padding>
+</GridPane>
