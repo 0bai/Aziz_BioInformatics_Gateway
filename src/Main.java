@@ -23,8 +23,6 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws IOException, FileNotFoundException, ClassNotFoundException, BackingStoreException {
         primaryStage.setTitle("Aziz Bioinformatics Gateway");
         new SignInViewController().launch(primaryStage);
-        
-
     }
 
     /**
