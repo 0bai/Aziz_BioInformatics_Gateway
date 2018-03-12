@@ -31,6 +31,7 @@ public class WizardController {
     private ArrayList<URL> wizard;
 
 
+
     public WizardController() {
         wizard = new ArrayList<>();
         wizard.add(getClass().getResource("/Views/TestsSelectionView.fxml"));
@@ -72,12 +73,12 @@ public class WizardController {
             WizardView wizardSubView = (WizardView) fxmlLoader.getController();
             wizardSubView.setWizard(this);
             scene = new Scene(parent);
-
+        
         } catch (IOException ex) {
 
             throw new RuntimeException(ex);
         }
-        
+   
         stage.setScene(scene);
 
     }

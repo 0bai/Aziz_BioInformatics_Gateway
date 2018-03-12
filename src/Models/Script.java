@@ -173,7 +173,7 @@ public class Script implements SSHListener {
                 + "#PBS -q " + queue.getValue() + (month.getValue() ? "-1m" : "") + "\n"
                 + "#PBS -N " + name.getValue() + "\n"
                 + "cd /home/" + SSHWrapper.username + "/app/meme/bin\n"
-                + "./meme " + inputFile.getValue() + " -" + inputType.getValue() + " -o" + (overWrite.getValue() ? "c" : "") + SSHWrapper.GetRemoteHomeFolder()+SSHWrapper.GetABGFolder()+"/jobs/"+outputName.getName()
+                + "./meme " + inputFile.getValue() + " -" + inputType.getValue() + " -o" + (overWrite.getValue() ? "c" : "") + SSHWrapper.GetRemoteHomeFolder()+SSHWrapper.GetABGFolder()+"jobs/"+outputName.getName()
                 + (outputType.getValue() ? " -text" : "") + " -mod " + ocurrence.getValue() + " -nmotif " + motifNumber.getValue() + (exactMotifSites.getValue() ? " -nsites " + maxMotifSites.getValue() : "")
                 + " -minsites " + minMotifSites.getValue() + " -maxsites " + maxMotifSites.getValue() + " -wnsites " + bias.getValue() + " -w " + motifLength.getValue()
                 + " -minw " + minMotifLength.getValue() + " -maxw " + maxMotifLength.getValue() + (trimming.getValue() ? " -nomatrim " : "") + "-wg " + gapOpeningCost.getValue() + " -ws " + gapExtensionCost.getValue() + (noEndGaps.getValue() ? " -noendgaps" : "");

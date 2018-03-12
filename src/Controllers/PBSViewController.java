@@ -68,7 +68,8 @@ public class PBSViewController extends WizardView implements Initializable {
     }
 
     @FXML
-    private void next(ActionEvent event) {        
+    private void next(ActionEvent event) {  
+        validate();
         super.wizard.script.getName().bind(name.textProperty());
         super.wizard.script.getWallTime().bind(walltime.textProperty());
         super.wizard.script.getQueue().bind(new SimpleStringProperty(thin.isSelected()?"thin":"fat"));
@@ -77,5 +78,12 @@ public class PBSViewController extends WizardView implements Initializable {
         super.wizard.script.getThreads().bind(threads.valueProperty());
         super.wizard.next(event);
     }
+    
+    private boolean validate(){
+        if (name.getText().isEmpty()) {
+          //  name.getStyle().
+        }
+    
+    return true;}
     
 }

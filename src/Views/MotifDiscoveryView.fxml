@@ -21,23 +21,21 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.shape.Rectangle?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane id="AnchorPane" maxHeight="600.0" maxWidth="400.0" minHeight="600.0" minWidth="400.0" pickOnBounds="false" prefHeight="600.0" prefWidth="400.0" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controllers.MotifDiscoveryViewController">
+<AnchorPane id="AnchorPane" maxHeight="600.0" maxWidth="400.0" minHeight="600.0" minWidth="400.0" pickOnBounds="false" prefHeight="600.0" prefWidth="400.0" stylesheets="@../bootstrap3.css" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controllers.MotifDiscoveryViewController">
     <children>
-        <BorderPane layoutX="10.0" layoutY="10.0" maxHeight="600.0" maxWidth="400.0" minHeight="600.0" minWidth="400.0" prefHeight="600.0" prefWidth="400.0" style="-fx-background-color: RGB(221,221,221);" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+        <BorderPane layoutX="10.0" layoutY="10.0" maxHeight="600.0" maxWidth="400.0" minHeight="600.0" minWidth="400.0" prefHeight="600.0" prefWidth="400.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
             <center>
-                <StackPane maxHeight="465.0" maxWidth="380.0" minHeight="465.0" minWidth="380.0" pickOnBounds="false" prefHeight="465.0" prefWidth="380.0" style="-fx-background-color: RGB(221,221,221);">
+                <StackPane pickOnBounds="false">
                     <children>
-                        <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#ffffff00" height="465.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.5" width="380.0" />
                         <VBox maxHeight="480.0" maxWidth="380.0" minHeight="480.0" minWidth="380.0" prefHeight="480.0" prefWidth="380.0" StackPane.alignment="CENTER_LEFT">
                             <children>
                                 <VBox prefHeight="118.0" prefWidth="380.0">
                                     <children>
                                         <Label text="Output Options">
                                             <VBox.margin>
-                                                <Insets left="9.0" top="20.0" />
+                                                <Insets left="9.0" top="10.0" />
                                             </VBox.margin>
                                             <font>
                                                 <Font size="15.0" />
@@ -86,7 +84,10 @@
                                     </CheckBox>
                                  </children>
                                         </HBox>
-                                        <Separator prefWidth="200.0" />
+                                        <Separator prefHeight="13.0" prefWidth="466.0">
+                                 <VBox.margin>
+                                    <Insets left="5.0" />
+                                 </VBox.margin></Separator>
                                     </children>
                                 </VBox>
                                 <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0">
@@ -128,7 +129,10 @@
                                         <Insets left="10.0" />
                                     </VBox.margin>
                                 </HBox>
-                                <Separator prefWidth="200.0" />
+                                <Separator prefHeight="13.0" prefWidth="473.0">
+                           <VBox.margin>
+                              <Insets left="5.0" />
+                           </VBox.margin></Separator>
                                 <Label text="Motif Options">
                                     <font>
                                         <Font size="15.0" />
@@ -176,7 +180,7 @@
                                                 <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="1" max="1000" min="1" />
                                             </valueFactory>                               
                                             <HBox.margin>
-                                                <Insets left="70.0" />
+                                                <Insets left="112.0" />
                                             </HBox.margin>
                                         </Spinner>
                                     </children>
@@ -191,12 +195,12 @@
                                                 <Font size="15.0" />
                                             </font>
                                         </Label>
-                                        <TextField fx:id="motifMax" maxWidth="43.0" minWidth="43.0" prefWidth="43.0" promptText="Max">
+                                        <TextField fx:id="motifMax" maxWidth="45.0" minWidth="45.0" prefWidth="45.0" promptText="Max">
                                             <HBox.margin>
-                                                <Insets left="10.0" />
+                                                <Insets left="25.0" />
                                             </HBox.margin>
                                         </TextField>
-                                        <TextField fx:id="motifMin" maxWidth="43.0" minWidth="43.0" prefWidth="43.0" promptText="Min">
+                                        <TextField fx:id="motifMin" maxWidth="45.0" minWidth="45.0" prefWidth="45.0" promptText="Min">
                                             <HBox.margin>
                                                 <Insets left="10.0" />
                                             </HBox.margin>
@@ -246,7 +250,7 @@
                                     <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="1" max="1000" min="1" />
                                  </valueFactory>
                                  <HBox.margin>
-                                    <Insets left="130.0" />
+                                    <Insets left="133.0" />
                                  </HBox.margin>
                               </Spinner>
                               <TextField fx:id="motifLengthMax" maxWidth="43.0" minWidth="43.0" prefWidth="43.0" promptText="Max">
@@ -279,7 +283,7 @@
                               </Label>
                               <TextField fx:id="gapOpen" maxWidth="43.0" minWidth="43.0" prefWidth="43.0" promptText="11">
                                  <HBox.margin>
-                                    <Insets left="50.0" />
+                                    <Insets left="52.0" />
                                  </HBox.margin>
                               </TextField>
                            </children>
@@ -296,7 +300,7 @@
                               </Label>
                               <TextField fx:id="gapExtend" maxWidth="43.0" minWidth="43.0" prefWidth="43.0" promptText="11">
                                  <HBox.margin>
-                                    <Insets left="42.0" />
+                                    <Insets left="43.0" />
                                  </HBox.margin>
                               </TextField>
                            </children>
@@ -316,7 +320,7 @@
                                     <Font size="15.0" />
                                  </font>
                                  <HBox.margin>
-                                    <Insets left="63.0" />
+                                    <Insets left="68.0" />
                                  </HBox.margin>
                               </CheckBox>
                            </children>
@@ -328,12 +332,12 @@
                         </VBox>
                     </children>
                     <BorderPane.margin>
-                        <Insets top="10.0" />
+                        <Insets left="5.0" />
                     </BorderPane.margin>
                 </StackPane>
             </center>
             <top>
-                <Pane maxHeight="70.0" maxWidth="400.0" minHeight="70.0" minWidth="400.0" prefHeight="70.0" prefWidth="400.0" style="-fx-background-color: RGB(143,143,143);">
+                <Pane id="header" maxHeight="70.0" maxWidth="400.0" minHeight="70.0" minWidth="400.0" prefHeight="70.0" prefWidth="400.0">
                     <BorderPane.margin>
                         <Insets />
                     </BorderPane.margin>
@@ -350,10 +354,10 @@
                 </Pane>
             </top>
             <bottom>
-                <ButtonBar maxHeight="50.0" maxWidth="400.0" minHeight="50.0" minWidth="400.0" prefHeight="50.0" prefWidth="400.0" style="-fx-background-color: RGB(221,221,221);" BorderPane.alignment="CENTER">
+                <ButtonBar id="header" maxHeight="50.0" maxWidth="400.0" minHeight="50.0" minWidth="400.0" prefHeight="50.0" prefWidth="400.0" BorderPane.alignment="CENTER">
                     <buttons>
-                        <Button fx:id="back" maxWidth="30.0" minWidth="30.0" mnemonicParsing="false" onAction="#back" prefWidth="30.0" text="Back" translateX="-240.0" />
-                        <Button fx:id="next" maxWidth="30.0" minWidth="30.0" mnemonicParsing="false" onAction="#next" prefWidth="30.0" text="Next" translateX="-10.0" />
+                        <Button fx:id="back" maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#back" text="Back" translateX="-240.0" />
+                        <Button fx:id="next" maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#next" text="Next" translateX="-10.0" />
                     </buttons>
                 </ButtonBar>
             </bottom>
