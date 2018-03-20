@@ -426,6 +426,11 @@ VBox > .split-menu-button.last > .arrow-button {
     -fx-effect: dropshadow(gaussian, #66afe9, 10, 0, 0, 0);
 }
 
+.error {
+    -fx-border-color: rgba(255,0,0,0.4);
+}
+
+
 .text-area .scroll-pane, .text-area .scroll-pane .content {
     -fx-background-color: white;
     -fx-background-radius: 4;
@@ -937,7 +942,7 @@ VBox > .split-menu-button.last > .arrow-button {
     -fx-background-color:  RGB(85,190,221);
 }
 .menu-button{
-     -fx-background-color:  RGB(85,190,221);
+    -fx-background-color:  RGB(85,190,221);
 }
 /*******************************************************************************
  *                                                                             *

@@ -81,7 +81,7 @@ public class PBSViewController extends WizardView implements Initializable {
     
     private boolean validate(){
         if (name.getText().isEmpty()) {
-          //  name.getStyle().
+   
         }
     
     return true;}

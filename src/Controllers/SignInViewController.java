@@ -23,6 +23,7 @@ import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import javafx.application.Platform;
 import javafx.beans.property.StringProperty;
+import javafx.collections.FXCollections;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -33,6 +34,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 
 /**
@@ -41,7 +43,7 @@ import javafx.stage.Stage;
  * @author OBAI
  */
 public class SignInViewController implements Initializable, SSHListener {
-    
+
     private Stage stage;
     private Scene scene;
     private Parent parent;
@@ -58,49 +60,54 @@ public class SignInViewController implements Initializable, SSHListener {
     private Button signInBT;
     @FXML
     private Button cancelBT;
+    @FXML
+    private ImageView errorN;
+    @FXML
+    private ImageView errorP;
+
     static SSHTask AuthTask;
-    
+
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        
-        usernameTF.textProperty().addListener((v, oldValue, newValue) -> {
-            if (newValue.trim().isEmpty()) {
-                usernameTF.setStyle("-fx-text-box-border: red ;-fx-focus-color: red ;");
+        usernameTF.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (usernameTF.getText().trim().isEmpty()) {
+                usernameTF.getStyleClass().add("error");
+               usernameTF.requestFocus();
             } else {
-                usernameTF.setStyle("-fx-text-box-border: green ;-fx-focus-color: green ;");
+                usernameTF.getStyleClass().remove("error");
             }
         });
-        
-        passwordF.textProperty().addListener((v, oldValue, newValue) -> {
-            if (newValue.trim().isEmpty()) {
-                passwordF.setStyle("-fx-text-box-border: red ;-fx-focus-color: red ;");
+
+        passwordF.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (passwordF.getText().trim().isEmpty()) {
+                passwordF.getStyleClass().add("error");
+                passwordF.requestFocus();
             } else {
-                passwordF.setStyle("-fx-text-box-border: green ;-fx-focus-color: green ;");
+                passwordF.getStyleClass().remove("error");
             }
         });
-        
     }
-    
+
     public SignInViewController() {
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/Views/SignInView.fxml"));
         fxmlLoader.setController(this);
         try {
             parent = (Parent) fxmlLoader.load();
             // set height and width here for this login scene
-            scene = new Scene(parent, 309, 129);
+            scene = new Scene(parent);
         } catch (IOException ex) {
             System.out.println("Error displaying login window");
             throw new RuntimeException(ex);
         }
     }
-    
+
     public void launch(Stage stage) {
         this.stage = stage;
         stage.setScene(scene);
         stage.setResizable(false);
         stage.show();
     }
-    
+
     public void SignIn() throws UnknownHostException, IOException, Exception, Throwable {
 //        usernameTF.setText("obai");
 //        passwordF.setText("0ba1Alnajjar");
@@ -108,7 +115,7 @@ public class SignInViewController implements Initializable, SSHListener {
         passwordF.setText("hphf9Nr2X");
         if (!usernameTF.getText().equalsIgnoreCase("") && !passwordF.getText().equalsIgnoreCase("")) {
             Platform.runLater(() -> progressIndicator.setVisible(true));
-            
+
             thread = new Thread(task = new Task() {
                 @Override
                 protected Boolean call() throws Exception {
@@ -117,7 +124,7 @@ public class SignInViewController implements Initializable, SSHListener {
             });
             thread.setDaemon(true);
             thread.start();
-            
+
             if (task.get()) {
                 SSHWrapper.SetCredentials(usernameTF.getText(), passwordF.getText(), SSHWrapper.host, 22);
                 SSHConnectionManager.SetCredentials(usernameTF.getText(), passwordF.getText(), SSHWrapper.host);
@@ -127,18 +134,18 @@ public class SignInViewController implements Initializable, SSHListener {
             } else {
                 sshResponse("Connection Error", "Please Check Your VPN !");
             }
-            
+
         }
-        
+
     }
-    
+
     public void cancelM() {
         stage.close();
     }
-    
+
     @Override
     public void sshResponse(String strCommand, String strResponse) {
-        
+
         if (strResponse.equalsIgnoreCase("")) {
             Platform.runLater(() -> {
                 progressIndicator.setVisible(false);
@@ -150,7 +157,7 @@ public class SignInViewController implements Initializable, SSHListener {
                 AlertBox.display(strCommand, strResponse);
             });
         } else {
-            
+
             Platform.runLater(() -> {
                 stage.close();
                 try {
@@ -164,22 +171,22 @@ public class SignInViewController implements Initializable, SSHListener {
                 }
             });
         }
-        
+
     }
-    
+
     @Override
     public void FileDownloadResponse(String strFilePath, Boolean bStatus) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
+
     @Override
     public void FileUploadResponse(String strFilePath, Boolean bStatus) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
+
     @Override
     public void GotFilesList(String strDirecory, Vector<ChannelSftp.LsEntry> lstItems) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
+
 }

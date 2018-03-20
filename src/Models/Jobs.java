@@ -29,6 +29,7 @@ public class Jobs implements SSHListener {
     private ObjectInputStream objectInput;
     static SSHTask AuthTasks;
     static Preferences pref;
+    
     File file;
     SimpleStringProperty fileu = new SimpleStringProperty();
     public Thread th = new Thread();

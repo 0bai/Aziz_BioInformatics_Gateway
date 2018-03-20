@@ -76,8 +76,8 @@ public class MotifDiscoveryViewController extends WizardView implements Initiali
     private CheckBox endGaps;
 
     private WizardController wizard;
-
-    /**
+    private String ocurr[] = {"oops","zoops","anr"};
+     /**
      * Initializes the controller class.
      */
     @Override
@@ -99,7 +99,7 @@ public class MotifDiscoveryViewController extends WizardView implements Initiali
         super.wizard.script.getOverWrite().bindBidirectional(overWrite.selectedProperty());
         super.wizard.script.getOutputType().bindBidirectional(textOut.selectedProperty());
         super.wizard.script.getInputType().bind(new SimpleStringProperty((String) inputType.getSelectedToggle().getUserData()));
-        super.wizard.script.getOcurrence().bindBidirectional(occurrence.valueProperty());
+        super.wizard.script.getOcurrence().setValue(ocurr[occurrence.getSelectionModel().selectedIndexProperty().getValue()]);
         super.wizard.script.getMotifNumber().bind(motifNumber.valueProperty());
         super.wizard.script.getMaxMotifSites().bindBidirectional(motifMax.textProperty());
         super.wizard.script.getMinMotifSites().bindBidirectional(motifMin.textProperty());
