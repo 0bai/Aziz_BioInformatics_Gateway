@@ -73,7 +73,7 @@ public class MainViewController implements Initializable, SSHListener {
                 try {
                     Thread.sleep(15000);
                     if (!wizard.script.jobID.isEmpty() && flag) {
-                        jobs.addJob(new JobItem(wizard.script.jobID, LocalDate.now().toString(), "Queued", wizard.script.getName().getValue(), wizard.script.getWallTime().getValue(), wizard.script.getNodes().getValue() + "", wizard.script.getThreads().getValue() + "", wizard.script));
+                        jobs.addJob(new JobItem(wizard.script.jobID, LocalDate.now().toString(), "Queued", wizard.script.getName().getValue(), wizard.script.getWallTime().getValue(), wizard.script.getNodes() + "", wizard.script.getThreads() + "", wizard.script));
                         jobsTable.refresh();
                         wizard.script = new Script();
                     }

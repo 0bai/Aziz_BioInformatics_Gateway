@@ -55,14 +55,30 @@
                                                 <Font size="15.0" />
                                             </font>
                                         </Label>
-                                        <TextField fx:id="walltime" maxHeight="25.0" maxWidth="270.0" minHeight="25.0" minWidth="270.0" prefHeight="25.0" prefWidth="270.0">
-                                            <font>
-                                                <Font size="15.0" />
-                                            </font>
-                                            <HBox.margin>
-                                                <Insets left="10.0" />
-                                            </HBox.margin>
-                                        </TextField>
+                              <Spinner fx:id="hours" maxHeight="25.0" maxWidth="69.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="69.0">
+                                 <valueFactory>
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="47" max="47" min="0" />
+                                 </valueFactory>
+                                 <HBox.margin>
+                                    <Insets left="8.0" />
+                                 </HBox.margin>
+                              </Spinner>
+                              <Spinner fx:id="minutes" maxHeight="25.0" maxWidth="69.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="69.0">
+                                 <valueFactory>
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="59" max="59" min="0" />
+                                 </valueFactory>
+                                 <HBox.margin>
+                                    <Insets left="1.0" />
+                                 </HBox.margin>
+                              </Spinner>
+                              <Spinner fx:id="seconds" maxHeight="25.0" maxWidth="69.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="69.0">
+                                 <valueFactory>
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="59" max="59" min="0" />
+                                 </valueFactory>
+                                 <HBox.margin>
+                                    <Insets left="1.0" />
+                                 </HBox.margin>
+                              </Spinner>
                                     </children>
                                     <VBox.margin>
                                         <Insets left="10.0" />

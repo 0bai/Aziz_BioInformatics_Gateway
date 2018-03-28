@@ -188,23 +188,29 @@
                                         <Insets left="10.0" />
                                     </VBox.margin>
                                 </HBox>
-                                <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0">
+                                <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="368.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="368.0">
                                     <children>
                                         <Label text="Number of Motif Sites">
                                             <font>
                                                 <Font size="15.0" />
                                             </font>
                                         </Label>
-                                        <TextField fx:id="motifMax" maxWidth="45.0" minWidth="45.0" prefWidth="45.0" promptText="Max">
-                                            <HBox.margin>
-                                                <Insets left="25.0" />
-                                            </HBox.margin>
-                                        </TextField>
-                                        <TextField fx:id="motifMin" maxWidth="45.0" minWidth="45.0" prefWidth="45.0" promptText="Min">
-                                            <HBox.margin>
-                                                <Insets left="10.0" />
-                                            </HBox.margin>
-                                        </TextField>
+                              <Spinner fx:id="minMotifSites" maxHeight="25.0" maxWidth="60.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="60.0">
+                                 <valueFactory>
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="2" max="1000" min="2" />
+                                 </valueFactory>
+                                 <HBox.margin>
+                                    <Insets left="10.0" />
+                                 </HBox.margin>
+                              </Spinner>
+                              <Spinner fx:id="maxMotifSites" maxHeight="25.0" maxWidth="60.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="60.0">
+                                 <valueFactory>
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="2" max="1000" min="2" />
+                                 </valueFactory>
+                                 <HBox.margin>
+                                    <Insets left="10.0" />
+                                 </HBox.margin>
+                              </Spinner>
                                         <CheckBox fx:id="motifExact" mnemonicParsing="false" text="Exact">
                                             <HBox.margin>
                                                 <Insets left="10.0" />
@@ -238,31 +244,37 @@
                                         <Insets left="10.0" />
                                     </VBox.margin>
                                 </HBox>
-                                <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0">
+                                <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="370.0" minHeight="35.0" minWidth="370.0" prefHeight="35.0" prefWidth="370.0">
                                     <children>
-                                        <Label text="Length">
+                                        <Label prefHeight="19.0" prefWidth="105.0" text="Length">
                                             <font>
                                                 <Font size="15.0" />
                                             </font>
                                         </Label>
                               <Spinner fx:id="motifLength" maxHeight="25.0" maxWidth="60.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="60.0">
                                  <valueFactory>
-                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="1" max="1000" min="1" />
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="8" max="1000" min="8" />
                                  </valueFactory>
                                  <HBox.margin>
-                                    <Insets left="133.0" />
+                                    <Insets left="61.0" />
                                  </HBox.margin>
                               </Spinner>
-                              <TextField fx:id="motifLengthMax" maxWidth="43.0" minWidth="43.0" prefWidth="43.0" promptText="Max">
+                              <Spinner fx:id="motifLengthMin" maxHeight="25.0" maxWidth="60.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="60.0">
+                                 <valueFactory>
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="8" max="1000" min="8" />
+                                 </valueFactory>
                                  <HBox.margin>
                                     <Insets left="10.0" />
                                  </HBox.margin>
-                              </TextField>
-                              <TextField fx:id="motifLengthMin" maxWidth="43.0" minWidth="43.0" prefWidth="43.0" promptText="Min">
+                              </Spinner>
+                              <Spinner fx:id="motifLengthMax" maxHeight="25.0" maxWidth="69.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="69.0">
+                                 <valueFactory>
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="50" max="50" min="8" />
+                                 </valueFactory>
                                  <HBox.margin>
                                     <Insets left="10.0" />
                                  </HBox.margin>
-                              </TextField>
+                              </Spinner>
                                     </children>
                                     <VBox.margin>
                                         <Insets left="10.0" top="10.0" />
@@ -281,11 +293,14 @@
                                     <Insets />
                                  </HBox.margin>
                               </Label>
-                              <TextField fx:id="gapOpen" maxWidth="43.0" minWidth="43.0" prefWidth="43.0" promptText="11">
+                              <Spinner fx:id="gapOpen" editable="true" maxHeight="25.0" maxWidth="60.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="60.0">
+                                 <valueFactory>
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="11" max="1000" min="11" />
+                                 </valueFactory>
                                  <HBox.margin>
-                                    <Insets left="52.0" />
+                                    <Insets left="36.0" />
                                  </HBox.margin>
-                              </TextField>
+                              </Spinner>
                            </children>
                         </HBox>
                         <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0">
@@ -298,11 +313,14 @@
                                     <Insets />
                                  </HBox.margin>
                               </Label>
-                              <TextField fx:id="gapExtend" maxWidth="43.0" minWidth="43.0" prefWidth="43.0" promptText="11">
+                              <Spinner fx:id="gapExtend" maxHeight="25.0" maxWidth="60.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="60.0">
+                                 <valueFactory>
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="11" max="1000" min="11" />
+                                 </valueFactory>
                                  <HBox.margin>
-                                    <Insets left="43.0" />
+                                    <Insets left="27.0" />
                                  </HBox.margin>
-                              </TextField>
+                              </Spinner>
                            </children>
                            <VBox.margin>
                               <Insets left="10.0" />

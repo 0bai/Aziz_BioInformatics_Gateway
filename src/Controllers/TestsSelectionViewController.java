@@ -5,6 +5,7 @@
  */
 package Controllers;
 
+import Models.MotifDiscoveryScript;
 import Models.WizardView;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -17,12 +18,8 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.ToggleGroup;
 
-/**
- * FXML Controller class
- *
- * @author OBAI
- */
 public class TestsSelectionViewController extends WizardView implements Initializable {
+
     @FXML
     private Button next;
     @FXML
@@ -34,23 +31,33 @@ public class TestsSelectionViewController extends WizardView implements Initiali
     @FXML
     private RadioButton MotifScanning;
     @FXML
+    private RadioButton fastMotif;
+    @FXML
     private ProgressIndicator loadingIndicator;
-    
+
     private WizardController wizard;
 
-    /**
-     * Initializes the controller class.
-     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-    }  
-
-
+    }
 
     @FXML
     private void next(ActionEvent event) {
-        Platform.runLater(()->loadingIndicator.setVisible(true));
+        Platform.runLater(() -> loadingIndicator.setVisible(true));
+        if (MotifMatching.isSelected()) {
+            super.wizard.script = new MotifMatchingScript();
+            super.wizard.test = 0;
+        } else if (MotifScanning.isSelected()) {
+            super.wizard.script = new MotifScanningScript();
+            super.wizard.test = 1;
+        } else if (motifDiscovery.isSelected()) {
+            super.wizard.script = new MotifDiscoveryScript();
+            super.wizard.test = 2;
+        } else {
+            super.wizard.script = new FastMotifMatchingScript();
+            super.wizard.test = 3;
+        }
         super.wizard.next(event);
     }
-    
+
 }

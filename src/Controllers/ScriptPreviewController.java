@@ -32,12 +32,12 @@ public class ScriptPreviewController extends WizardView implements Initializable
     @FXML
     private ProgressIndicator loadingIndicator;
 
-    /**
-     * Initializes the controller class.
-     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        Platform.runLater(() -> scriptPreviewField.setText(super.wizard.script.toString()));
+    }
+
+    public void setText() {
+        runLater(() -> scriptPreviewField.setText(super.wizard.script.getScriptVal().getValue()));
     }
 
     @FXML

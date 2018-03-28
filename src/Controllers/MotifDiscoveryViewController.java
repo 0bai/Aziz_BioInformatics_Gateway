@@ -1,10 +1,7 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package Controllers;
 
+import Models.MotifDiscoveryScript;
 import Models.WizardView;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -12,6 +9,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Side;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
@@ -19,15 +17,8 @@ import javafx.scene.control.RadioButton;
 import javafx.scene.control.Slider;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.TextField;
-import javafx.scene.control.TextFormatter;
 import javafx.scene.control.ToggleGroup;
-import javafx.util.StringConverter;
 
-/**
- * FXML Controller class
- *
- * @author OBAI
- */
 public class MotifDiscoveryViewController extends WizardView implements Initializable {
 
     @FXML
@@ -53,38 +44,45 @@ public class MotifDiscoveryViewController extends WizardView implements Initiali
     @FXML
     private Spinner<Integer> motifNumber;
     @FXML
-    private TextField motifMax;
-    @FXML
-    private TextField motifMin;
-    @FXML
     private CheckBox motifExact;
     @FXML
     private Slider bias;
     @FXML
     private Spinner<Integer> motifLength;
     @FXML
-    private TextField motifLengthMax;
+    private Spinner<Integer> motifLengthMax;
     @FXML
-    private TextField motifLengthMin;
+    private Spinner<Integer> motifLengthMin;
     @FXML
-    private TextField gapOpen;
+    private Spinner<Integer> gapOpen;
     @FXML
-    private TextField gapExtend;
+    private Spinner<Integer> gapExtend;
     @FXML
     private CheckBox trimming;
     @FXML
     private CheckBox endGaps;
+    @FXML
+    private Spinner<Integer> minMotifSites;
+    @FXML
+    private Spinner<Integer> maxMotifSites;
 
     private WizardController wizard;
-    private String ocurr[] = {"oops","zoops","anr"};
-     /**
-     * Initializes the controller class.
-     */
+    private String ocurr[] = {"oops", "zoops", "anr"};
+
+    @FXML
+
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         DNA.setUserData("dna");
         RNA.setUserData("rna");
         Protein.setUserData("protein");
+        outputName.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (outputName.getText().trim().isEmpty()) {
+                outputName.getStyleClass().add("error");
+            } else {
+                outputName.getStyleClass().remove("error");
+            }
+        });
     }
 
     @FXML
@@ -95,25 +93,31 @@ public class MotifDiscoveryViewController extends WizardView implements Initiali
     @FXML
     private void next(ActionEvent event) {
 
-        super.wizard.script.getOutputName().bindBidirectional(outputName.textProperty());
-        super.wizard.script.getOverWrite().bindBidirectional(overWrite.selectedProperty());
-        super.wizard.script.getOutputType().bindBidirectional(textOut.selectedProperty());
-        super.wizard.script.getInputType().bind(new SimpleStringProperty((String) inputType.getSelectedToggle().getUserData()));
-        super.wizard.script.getOcurrence().setValue(ocurr[occurrence.getSelectionModel().selectedIndexProperty().getValue()]);
-        super.wizard.script.getMotifNumber().bind(motifNumber.valueProperty());
-        super.wizard.script.getMaxMotifSites().bindBidirectional(motifMax.textProperty());
-        super.wizard.script.getMinMotifSites().bindBidirectional(motifMin.textProperty());
-        super.wizard.script.getExactMotifSites().bindBidirectional(motifExact.selectedProperty());
-        super.wizard.script.getBias().bindBidirectional(bias.valueProperty());
-        super.wizard.script.getMotifLength().bind(motifLength.valueProperty());
-        super.wizard.script.getMaxMotifLength().bindBidirectional(motifLengthMax.textProperty());
-        super.wizard.script.getMinMotifLength().bindBidirectional(motifLengthMin.textProperty());
-        super.wizard.script.getGapOpeningCost().bindBidirectional(gapOpen.textProperty());
-        super.wizard.script.getGapExtensionCost().bindBidirectional(gapExtend.textProperty());
-        super.wizard.script.getTrimming().bindBidirectional(trimming.selectedProperty());
-        super.wizard.script.getNoEndGaps().bindBidirectional(endGaps.selectedProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getOutputName().bindBidirectional(outputName.textProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getOverWrite().bindBidirectional(overWrite.selectedProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getOutputType().bindBidirectional(textOut.selectedProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getInputType().bind(new SimpleStringProperty((String) inputType.getSelectedToggle().getUserData()));
+        ((MotifDiscoveryScript) super.wizard.script).getOcurrence().setValue(ocurr[occurrence.getSelectionModel().selectedIndexProperty().getValue()]);
+        ((MotifDiscoveryScript) super.wizard.script).getMotifNumber().bind(motifNumber.valueProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getMaxMotifSites().bind(maxMotifSites.valueProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getMinMotifSites().bind(minMotifSites.valueProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getExactMotifSites().bindBidirectional(motifExact.selectedProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getBias().bindBidirectional(bias.valueProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getMotifLength().bind(motifLength.valueProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getMaxMotifLength().bind(motifLengthMax.valueProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getMinMotifLength().bind(motifLengthMin.valueProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getGapOpeningCost().bind(gapOpen.valueProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getGapExtensionCost().bind(gapExtend.valueProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getTrimming().bindBidirectional(trimming.selectedProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getNoEndGaps().bindBidirectional(endGaps.selectedProperty());
+        super.wizard.script.setScriptVal(new SimpleStringProperty(((MotifDiscoveryScript) super.wizard.script).toString()));
+        if (Validate()) {
+            super.wizard.next(event);
+        }
 
-        super.wizard.next(event);
+    }
 
+    private boolean Validate() {
+        return !outputName.getText().trim().isEmpty();
     }
 }

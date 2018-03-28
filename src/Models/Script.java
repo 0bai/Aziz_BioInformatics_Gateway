@@ -4,7 +4,7 @@ import com.jcraft.jsch.ChannelSftp;
 import java.util.Vector;
 import javafx.beans.property.*;
 
-public class Script implements SSHListener {
+public class Script  implements SSHListener {
 
     private SimpleStringProperty name;
     private SimpleStringProperty wallTime;
@@ -13,23 +13,6 @@ public class Script implements SSHListener {
     private SimpleIntegerProperty nodes;
     private SimpleIntegerProperty threads;
     private SimpleStringProperty inputFile;
-    private SimpleStringProperty outputName;
-    private SimpleBooleanProperty overWrite;
-    private SimpleBooleanProperty outputType;
-    private SimpleStringProperty inputType;
-    private SimpleStringProperty ocurrence;
-    private SimpleIntegerProperty motifNumber;
-    private SimpleStringProperty maxMotifSites;
-    private SimpleStringProperty minMotifSites;
-    private SimpleBooleanProperty exactMotifSites;
-    private SimpleDoubleProperty bias;
-    private SimpleIntegerProperty motifLength;
-    private SimpleStringProperty maxMotifLength;
-    private SimpleStringProperty minMotifLength;
-    private SimpleStringProperty gapOpeningCost;
-    private SimpleStringProperty gapExtensionCost;
-    private SimpleBooleanProperty trimming;
-    private SimpleBooleanProperty noEndGaps;
     private SimpleStringProperty scriptVal;
     public Thread th;
     public String jobID = "";
@@ -42,128 +25,98 @@ public class Script implements SSHListener {
         nodes = new SimpleIntegerProperty();
         threads = new SimpleIntegerProperty();
         inputFile = new SimpleStringProperty();
-        outputName = new SimpleStringProperty();
-        overWrite = new SimpleBooleanProperty();
-        outputType = new SimpleBooleanProperty();
-        inputType = new SimpleStringProperty();
-        ocurrence = new SimpleStringProperty();
-        motifNumber = new SimpleIntegerProperty();
-        maxMotifSites = new SimpleStringProperty();
-        minMotifSites = new SimpleStringProperty();
-        exactMotifSites = new SimpleBooleanProperty();
-        bias = new SimpleDoubleProperty();
-        motifLength = new SimpleIntegerProperty();
-        maxMotifLength = new SimpleStringProperty();
-        minMotifLength = new SimpleStringProperty();
-        gapOpeningCost = new SimpleStringProperty();
-        gapExtensionCost = new SimpleStringProperty();
-        trimming = new SimpleBooleanProperty();
-        noEndGaps = new SimpleBooleanProperty();
         scriptVal = new SimpleStringProperty();
     }
 
-    public void init() {
-        scriptVal.setValue(toString());
+    public Script(SimpleStringProperty name, SimpleStringProperty wallTime, SimpleStringProperty queue, SimpleBooleanProperty month, SimpleIntegerProperty nodes, SimpleIntegerProperty threads, SimpleStringProperty inputFile) {
+        this.name = name;
+        this.wallTime = wallTime;
+        this.queue = queue;
+        this.month = month;
+        this.nodes = nodes;
+        this.threads = threads;
+        this.inputFile = inputFile;
     }
-
-    public SimpleStringProperty getScriptVal() {
-        return scriptVal;
-    }
+    
 
     public SimpleStringProperty getName() {
         return name;
+    }
+
+    public void setName(SimpleStringProperty name) {
+        this.name = name;
     }
 
     public SimpleStringProperty getWallTime() {
         return wallTime;
     }
 
+    public void setWallTime(SimpleStringProperty wallTime) {
+        this.wallTime = wallTime;
+    }
+
     public SimpleStringProperty getQueue() {
         return queue;
+    }
+
+    public void setQueue(SimpleStringProperty queue) {
+        this.queue = queue;
     }
 
     public SimpleBooleanProperty getMonth() {
         return month;
     }
 
+    public void setMonth(SimpleBooleanProperty month) {
+        this.month = month;
+    }
+
     public SimpleIntegerProperty getNodes() {
         return nodes;
+    }
+
+    public void setNodes(SimpleIntegerProperty nodes) {
+        this.nodes = nodes;
     }
 
     public SimpleIntegerProperty getThreads() {
         return threads;
     }
 
+    public void setThreads(SimpleIntegerProperty threads) {
+        this.threads = threads;
+    }
+
     public SimpleStringProperty getInputFile() {
         return inputFile;
     }
 
-    public SimpleStringProperty getOutputName() {
-        return outputName;
+    public void setInputFile(SimpleStringProperty inputFile) {
+        this.inputFile = inputFile;
     }
 
-    public SimpleBooleanProperty getOverWrite() {
-        return overWrite;
+    public SimpleStringProperty getScriptVal() {
+        return scriptVal;
     }
 
-    public SimpleBooleanProperty getOutputType() {
-        return outputType;
+    public void setScriptVal(SimpleStringProperty scriptVal) {
+        this.scriptVal = scriptVal;
     }
 
-    public SimpleStringProperty getInputType() {
-        return inputType;
+    public Thread getTh() {
+        return th;
     }
 
-    public SimpleStringProperty getOcurrence() {
-        return ocurrence;
+    public void setTh(Thread th) {
+        this.th = th;
     }
 
-    public SimpleIntegerProperty getMotifNumber() {
-        return motifNumber;
+    public String getJobID() {
+        return jobID;
     }
 
-    public SimpleStringProperty getMaxMotifSites() {
-        return maxMotifSites;
-    }
-
-    public SimpleStringProperty getMinMotifSites() {
-        return minMotifSites;
-    }
-
-    public SimpleBooleanProperty getExactMotifSites() {
-        return exactMotifSites;
-    }
-
-    public SimpleDoubleProperty getBias() {
-        return bias;
-    }
-
-    public SimpleIntegerProperty getMotifLength() {
-        return motifLength;
-    }
-
-    public SimpleStringProperty getMaxMotifLength() {
-        return maxMotifLength;
-    }
-
-    public SimpleStringProperty getMinMotifLength() {
-        return minMotifLength;
-    }
-
-    public SimpleStringProperty getGapOpeningCost() {
-        return gapOpeningCost;
-    }
-
-    public SimpleStringProperty getGapExtensionCost() {
-        return gapExtensionCost;
-    }
-
-    public SimpleBooleanProperty getTrimming() {
-        return trimming;
-    }
-
-    public SimpleBooleanProperty getNoEndGaps() {
-        return noEndGaps;
+    public void setJobID(String jobID) {
+        this.jobID = jobID;
     }
 
     @Override
@@ -171,21 +124,16 @@ public class Script implements SSHListener {
         //  System.out.println(nodes.getValue());
         return "#PBS -l select=" + nodes.getValue() + ":ncpus=" + threads.getValue() + "\n"
                 + "#PBS -q " + queue.getValue() + (month.getValue() ? "-1m" : "") + "\n"
-                + "#PBS -N " + name.getValue() + "\n"
-                + "cd /home/" + SSHWrapper.username + "/app/meme/bin\n"
-                + "./meme " + inputFile.getValue() + " -" + inputType.getValue() + " -o" + (overWrite.getValue() ? "c" : "") + SSHWrapper.GetRemoteHomeFolder()+SSHWrapper.GetABGFolder()+"jobs/"+outputName.getName()
-                + (outputType.getValue() ? " -text" : "") + " -mod " + ocurrence.getValue() + " -nmotif " + motifNumber.getValue() + (exactMotifSites.getValue() ? " -nsites " + maxMotifSites.getValue() : "")
-                + " -minsites " + minMotifSites.getValue() + " -maxsites " + maxMotifSites.getValue() + " -wnsites " + bias.getValue() + " -w " + motifLength.getValue()
-                + " -minw " + minMotifLength.getValue() + " -maxw " + maxMotifLength.getValue() + (trimming.getValue() ? " -nomatrim " : "") + "-wg " + gapOpeningCost.getValue() + " -ws " + gapExtensionCost.getValue() + (noEndGaps.getValue() ? " -noendgaps" : "");
+                + "#PBS -N " + name.getValue() + "\n";
     }
 
     public void submit() {
         while (th != null && th.isAlive()) {
         }
-        th = new Thread(new SSHTask(this, "/bin/echo " + scriptVal.getValue() + " > /home/" + SSHWrapper.username + "/ABG/jobs/" + name.getValue()));
+        th = new Thread(new SSHTask(this, "/bin/echo " + scriptVal + " > /home/" + SSHWrapper.username + "/ABG/jobs/" + name));
         th.setDaemon(true);
         th.start();
-        th = new Thread(new SSHTask(this, "/opt/pbs/default/bin/qsub /home/" + SSHWrapper.username + "/ABG/jobs/" + name.getValue()));
+        th = new Thread(new SSHTask(this, "/opt/pbs/default/bin/qsub /home/" + SSHWrapper.username + "/ABG/jobs/" + name));
         th.setDaemon(true);
         th.start();
     }
