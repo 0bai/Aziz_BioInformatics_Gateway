@@ -5,7 +5,10 @@
  */
 package Controllers;
 
+import Models.FastMotifMatchingScript;
 import Models.MotifDiscoveryScript;
+import Models.MotifMatchingScript;
+import Models.MotifScanningScript;
 import Models.WizardView;
 import java.net.URL;
 import java.util.ResourceBundle;
