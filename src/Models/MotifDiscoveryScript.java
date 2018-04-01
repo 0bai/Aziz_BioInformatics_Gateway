@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package Models;
 
 import javafx.beans.property.SimpleBooleanProperty;
@@ -10,10 +5,6 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 
-/**
- *
- * @author OBAI
- */
 public class MotifDiscoveryScript extends Script {
 
     private SimpleStringProperty outputName;
@@ -124,10 +115,10 @@ public class MotifDiscoveryScript extends Script {
 
     @Override
     public String toString() {
-        return (super.toString()+ "cd /home/" + SSHWrapper.username + "/app/meme/bin\n"
-                + "./meme " + outputName.getValue() + " -" + inputType.getValue() + " -o" + (overWrite.getValue() ? "c" : "") + SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "jobs/" + outputName.getName()
+        return (super.toString() + "cd /home/" + SSHWrapper.username + "/app/meme/bin\n"
+                + "./meme " + super.getInputFile() + " " + outputName.getValue() + " -" + inputType.getValue() + " -o" + (overWrite.getValue() ? "c" : "") + SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "jobs/" + outputName.getName()
                 + (outputType.getValue() ? " -text" : "") + (ocurrence.getValue().isEmpty() ? "" : " -mod " + ocurrence.getValue()) + " -nmotif " + motifNumber.getValue() + (exactMotifSites.getValue() ? " -nsites " + maxMotifSites.getValue() : "")
-                +" -minsites " + minMotifSites.getValue() + " -maxsites " + maxMotifSites.getValue()+ " -wnsites " + bias.getValue() + " -w " + motifLength.getValue()
+                + " -minsites " + minMotifSites.getValue() + " -maxsites " + maxMotifSites.getValue() + " -wnsites " + bias.getValue() + " -w " + motifLength.getValue()
                 + " -minw " + minMotifLength.getValue() + " -maxw " + maxMotifLength.getValue() + (trimming.getValue() ? " -nomatrim " : "") + "-wg " + gapOpeningCost.getValue() + " -ws " + gapExtensionCost.getValue() + (noEndGaps.getValue() ? " -noendgaps" : ""));
     }
 

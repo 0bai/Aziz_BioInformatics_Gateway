@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.String?>
+<?import javafx.collections.FXCollections?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.SpinnerValueFactory.IntegerSpinnerValueFactory?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane id="AnchorPane" maxHeight="600.0" maxWidth="400.0" minHeight="600.0" minWidth="400.0" pickOnBounds="false" prefHeight="600.0" prefWidth="400.0" stylesheets="@../Resources/bootstrap3.css" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controllers.MotifMatchingViewController">
+   <children>
+      <BorderPane layoutX="10.0" layoutY="10.0" maxHeight="600.0" maxWidth="400.0" minHeight="600.0" minWidth="400.0" prefHeight="600.0" prefWidth="400.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <center>
+            <StackPane pickOnBounds="false">
+               <children>
+                  <VBox maxHeight="480.0" maxWidth="380.0" minHeight="480.0" minWidth="380.0" prefHeight="480.0" prefWidth="380.0" StackPane.alignment="CENTER_LEFT">
+                     <children>
+                        <VBox prefHeight="118.0" prefWidth="380.0">
+                           <children>
+                              <Label text="Output Options">
+                                 <VBox.margin>
+                                    <Insets left="9.0" top="10.0" />
+                                 </VBox.margin>
+                                 <font>
+                                    <Font size="15.0" />
+                                 </font>
+                              </Label>
+                              <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0" VBox.vgrow="NEVER">
+                                 <VBox.margin>
+                                    <Insets left="10.0" top="5.0" />
+                                 </VBox.margin>
+                                 <children>
+                                    <Label text="Name">
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                    </Label>
+                                    <TextField fx:id="outputName" maxHeight="25.0" maxWidth="200.0" minHeight="25.0" minWidth="200.0" prefHeight="25.0" prefWidth="200.0">
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <HBox.margin>
+                                          <Insets left="10.0" />
+                                       </HBox.margin>
+                                    </TextField>
+                                    <CheckBox fx:id="overWrite" maxHeight="25.0" minHeight="25.0" mnemonicParsing="false" prefHeight="25.0" text="Overwrite">
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <HBox.margin>
+                                          <Insets left="5.0" />
+                                       </HBox.margin>
+                                    </CheckBox>
+                                 </children>
+                              </HBox>
+                              <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                                 <children>
+                                    <CheckBox fx:id="textOut" mnemonicParsing="false" text="Text Based Output">
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <HBox.margin>
+                                          <Insets left="53.0" />
+                                       </HBox.margin>
+                                    </CheckBox>
+                                 </children>
+                              </HBox>
+                              <Separator prefHeight="13.0" prefWidth="466.0">
+                                 <VBox.margin>
+                                    <Insets left="5.0" />
+                                 </VBox.margin>
+                              </Separator>
+                           </children>
+                        </VBox>
+                        <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0">
+                           <children>
+                              <Label text="Data Base ">
+                                 <font>
+                                    <Font size="15.0" />
+                                 </font>
+                              </Label>
+                              <ChoiceBox fx:id="dataBase" maxHeight="25.0" minHeight="25.0" prefHeight="25.0" prefWidth="250.0" value="Zero Or One">
+                                 <opaqueInsets>
+                                    <Insets />
+                                 </opaqueInsets>
+                                 <HBox.margin>
+                                    <Insets left="27.0" />
+                                 </HBox.margin>
+                              </ChoiceBox>
+                           </children>
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </HBox>
+                        <Separator prefHeight="13.0" prefWidth="473.0">
+                           <VBox.margin>
+                              <Insets left="5.0" />
+                           </VBox.margin>
+                        </Separator>
+                        <Label text="Scoring Options">
+                           <font>
+                              <Font size="15.0" />
+                           </font>
+                           <VBox.margin>
+                              <Insets left="10.0" top="5.0" />
+                           </VBox.margin>
+                        </Label>
+                        <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0">
+                           <children>
+                              <Label text="Comparison Function">
+                                 <font>
+                                    <Font size="15.0" />
+                                 </font>
+                              </Label>
+                              <ChoiceBox fx:id="comparison" maxHeight="25.0" maxWidth="200.0" minHeight="25.0" minWidth="200.0" prefHeight="25.0" prefWidth="200.0" value="Zero Or One">
+                                 <opaqueInsets>
+                                    <Insets />
+                                 </opaqueInsets>
+                                 <HBox.margin>
+                                    <Insets left="10.0" />
+                                 </HBox.margin>
+                                 <items>
+                                    <FXCollections fx:factory="observableArrayList">
+                                       <String fx:value="Pearson correlation coefficient"/>
+                                       <String fx:value="OnceEuclidian distance"/>
+                                       <String fx:value="Sandelin-Wasserman function"/>
+                                    </FXCollections>
+                                 </items>
+                              </ChoiceBox>
+                           </children>
+                           <VBox.margin>
+                              <Insets left="10.0" top="10.0" />
+                           </VBox.margin>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0">
+                           <children>
+                              <ChoiceBox fx:id="thresh" maxHeight="25.0" maxWidth="50.0" minHeight="25.0" minWidth="50.0" prefHeight="25.0" prefWidth="50.0" value="Zero Or One">
+                                 <opaqueInsets>
+                                    <Insets />
+                                 </opaqueInsets>
+                                 <items>
+                                    <FXCollections fx:factory="observableArrayList">
+                                       <String fx:value="Q" />
+                                       <String fx:value="E" />
+                                    </FXCollections>
+                                 </items>
+                              </ChoiceBox>
+                              <Slider fx:id="slider" maxWidth="300.0" minWidth="300.0" prefWidth="300.0" showTickLabels="true" showTickMarks="true" snapToTicks="true">
+                                 <HBox.margin>
+                                    <Insets left="20.0" />
+                                 </HBox.margin>
+                                 <padding>
+                                    <Insets top="10.0" />
+                                 </padding>
+                              </Slider>
+                           </children>
+                           <VBox.margin>
+                              <Insets left="10.0" top="10.0" />
+                           </VBox.margin>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0">
+                           <VBox.margin>
+                              <Insets left="10.0" top="20.0" />
+                           </VBox.margin>
+                           <children>
+                              <Label text="Minimum Overlap">
+                                 <font>
+                                    <Font size="15.0" />
+                                 </font>
+                                 <HBox.margin>
+                                    <Insets />
+                                 </HBox.margin>
+                              </Label>
+                              <Spinner fx:id="overlap" editable="true" maxHeight="25.0" maxWidth="60.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="60.0">
+                                 <valueFactory>
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="1" max="1000" min="1" />
+                                 </valueFactory>
+                                 <HBox.margin>
+                                    <Insets left="36.0" />
+                                 </HBox.margin>
+                              </Spinner>
+                           </children>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0">
+                           <children>
+                              <CheckBox fx:id="completeRows" mnemonicParsing="false" text="Complete Rows Only">
+                                 <font>
+                                    <Font size="15.0" />
+                                 </font>
+                                 <HBox.margin>
+                                    <Insets />
+                                 </HBox.margin>
+                              </CheckBox>
+                           </children>
+                           <VBox.margin>
+                              <Insets left="10.0" top="10.0" />
+                           </VBox.margin>
+                        </HBox>
+                     </children>
+                  </VBox>
+               </children>
+               <BorderPane.margin>
+                  <Insets left="5.0" />
+               </BorderPane.margin>
+            </StackPane>
+         </center>
+         <top>
+            <Pane id="header" maxHeight="70.0" maxWidth="400.0" minHeight="70.0" minWidth="400.0" prefHeight="70.0" prefWidth="400.0">
+               <BorderPane.margin>
+                  <Insets />
+               </BorderPane.margin>
+               <children>
+                  <Label text="Motif Matching" textFill="WHITE">
+                     <padding>
+                        <Insets left="10.0" top="30.0" />
+                     </padding>
+                     <font>
+                        <Font size="17.0" />
+                     </font>
+                  </Label>
+               </children>
+            </Pane>
+         </top>
+         <bottom>
+            <ButtonBar id="header" maxHeight="50.0" maxWidth="400.0" minHeight="50.0" minWidth="400.0" prefHeight="50.0" prefWidth="400.0" BorderPane.alignment="CENTER">
+               <buttons>
+                  <Button fx:id="back" maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#back" text="Back" translateX="-240.0" />
+                  <Button fx:id="next" maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#next" text="Next" translateX="-10.0" />
+               </buttons>
+            </ButtonBar>
+         </bottom>
+      </BorderPane>
+   </children>
+</AnchorPane>

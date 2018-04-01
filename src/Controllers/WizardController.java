@@ -35,12 +35,12 @@ public class WizardController {
         scenes = new ArrayList<>();
         controllers = new ArrayList<>();
         wizard.add(getClass().getResource("/Views/TestsSelectionView.fxml"));
-        wizard.add(getClass().getResource("/Views/DataSelectionView.fxml"));
+        //wizard.add(getClass().getResource("/Views/DataSelectionView.fxml"));
         wizard.add(getClass().getResource("/Views/PBSView.fxml"));
         wizard.add(getClass().getResource("/Views/MotifMatchingView.fxml"));
-        wizard.add(getClass().getResource("/Views/MotifScanningView.fxml"));
+        //wizard.add(getClass().getResource("/Views/MotifScanningView.fxml"));
         wizard.add(getClass().getResource("/Views/MotifDiscoveryView.fxml"));
-        wizard.add(getClass().getResource("/Views/FastMotifMatchingView.fxml"));
+        //wizard.add(getClass().getResource("/Views/FastMotifMatchingView.fxml"));
         wizard.add(getClass().getResource("/Views/ScriptPreview.fxml"));
         selectedAzizFiles = new SimpleListProperty<>();
         loadScreen();
@@ -64,41 +64,41 @@ public class WizardController {
     public void next(ActionEvent event) {
         current++;
         if (current == 1) {
-            switch (test) {
-                case 0:
-                    scenes.remove(4);
-                    scenes.remove(4);
-                    scenes.remove(4);
-                    controllers.remove(4);
-                    controllers.remove(4);
-                    controllers.remove(4);
-                    break;
-                case 1:
-                    scenes.remove(3);
-                    scenes.remove(4);
-                    scenes.remove(4);
-                    controllers.remove(3);
-                    controllers.remove(4);
-                    controllers.remove(4);
-                    break;
-                case 2:
-                    scenes.remove(3);
-                    scenes.remove(3);
-                    scenes.remove(4);
-                    controllers.remove(3);
-                    controllers.remove(3);
-                    controllers.remove(4);
-                    break;
-                case 3:
-                    scenes.remove(3);
-                    scenes.remove(3);
-                    scenes.remove(3);
-                    controllers.remove(3);
-                    controllers.remove(3);
-                    controllers.remove(3);
-                    break;
-
-            }
+//            switch (test) {
+//                case 0:
+//                    scenes.remove(4);
+//                    scenes.remove(4);
+//                    scenes.remove(4);
+//                    controllers.remove(4);
+//                    controllers.remove(4);
+//                    controllers.remove(4);
+//                    break;
+//                case 1:
+//                    scenes.remove(3);
+//                    scenes.remove(4);
+//                    scenes.remove(4);
+//                    controllers.remove(3);
+//                    controllers.remove(4);
+//                    controllers.remove(4);
+//                    break;
+//                case 2:
+//                    scenes.remove(3);
+//                    scenes.remove(3);
+//                    scenes.remove(4);
+//                    controllers.remove(3);
+//                    controllers.remove(3);
+//                    controllers.remove(4);
+//                    break;
+//                case 3:
+//                    scenes.remove(3);
+//                    scenes.remove(3);
+//                    scenes.remove(3);
+//                    controllers.remove(3);
+//                    controllers.remove(3);
+//                    controllers.remove(3);
+//                    break;
+//
+//            }
        }
         controllers.get(current).setWizard(this);
         if (current == controllers.size()-1) {

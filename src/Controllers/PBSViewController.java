@@ -1,4 +1,3 @@
-
 package Controllers;
 
 import Models.WizardView;
@@ -48,7 +47,7 @@ public class PBSViewController extends WizardView implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         walltime = new SimpleStringProperty();
-          name.focusedProperty().addListener((observable, oldValue, newValue) -> {
+        name.focusedProperty().addListener((observable, oldValue, newValue) -> {
             if (name.getText().trim().isEmpty()) {
                 name.getStyleClass().add("error");
             } else {
@@ -64,7 +63,7 @@ public class PBSViewController extends WizardView implements Initializable {
 
     @FXML
     private void next(ActionEvent event) {
-        validate();
+
         walltime.setValue(hours.getValue() + ":" + minutes.getValue() + ":" + seconds.getValue());
         super.wizard.script.getName().bind(name.textProperty());
         super.wizard.script.getWallTime().bind(walltime);
@@ -72,7 +71,10 @@ public class PBSViewController extends WizardView implements Initializable {
         super.wizard.script.getMonth().bind(month.selectedProperty());
         super.wizard.script.getNodes().bind(nodes.valueProperty());
         super.wizard.script.getThreads().bind(threads.valueProperty());
-        super.wizard.next(event);
+        if (validate()) {
+            super.wizard.next(event);
+        }
+
     }
 
     private boolean validate() {

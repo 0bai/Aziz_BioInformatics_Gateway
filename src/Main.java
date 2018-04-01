@@ -15,8 +15,8 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws IOException, FileNotFoundException, ClassNotFoundException, BackingStoreException {
         primaryStage.setTitle("Aziz Bioinformatics Gateway");
-        new SignInViewController().launch(primaryStage);
-      //  new WizardController().launch(new Stage());
+      //  new SignInViewController().launch(primaryStage);
+        new WizardController().launch(new Stage());
     }
 
     public static void main(String[] args) {
