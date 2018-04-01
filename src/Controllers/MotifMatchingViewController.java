@@ -51,7 +51,7 @@ public class MotifMatchingViewController extends WizardView implements Initializ
         slider.setMin(0);
         slider.setMajorTickUnit(10);
         slider.setMinorTickCount(1);
-        slider.setValue(0.5);
+        slider.setValue(10);
         thresh.valueProperty().addListener((obsv, oldVal, newVal) -> {
             Platform.runLater(() -> {
                 slider.setValueChanging(true);
@@ -61,12 +61,14 @@ public class MotifMatchingViewController extends WizardView implements Initializ
                     slider.setMin(0);
                     slider.setMajorTickUnit(10);
                     slider.setMinorTickCount(1);
+                      slider.setValue(10);
                 } else {
                     slider.setBlockIncrement(0.05);
                     slider.setMax(1.0);
                     slider.setMin(0);
                     slider.setMajorTickUnit(0.1);
                     slider.setMinorTickCount(1);
+                      slider.setValue(0.5);
                 }
                 slider.setValueChanging(false);
             });
