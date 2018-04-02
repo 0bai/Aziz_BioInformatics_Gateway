@@ -7,6 +7,7 @@
 <?import javafx.scene.control.ButtonBar?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.Slider?>
@@ -89,21 +90,33 @@
                               </Separator>
                            </children>
                         </VBox>
-                        <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0">
+                        <HBox alignment="CENTER_LEFT" maxHeight="60.0" maxWidth="360.0" minHeight="60.0" minWidth="360.0" prefHeight="60.0" prefWidth="360.0">
                            <children>
                               <Label text="Data Base ">
                                  <font>
                                     <Font size="15.0" />
                                  </font>
-                              </Label>
-                              <ChoiceBox fx:id="dataBase" maxHeight="25.0" minHeight="25.0" prefHeight="25.0" prefWidth="250.0" value="Zero Or One">
-                                 <opaqueInsets>
-                                    <Insets />
-                                 </opaqueInsets>
                                  <HBox.margin>
-                                    <Insets left="27.0" />
+                                    <Insets top="-40.0" />
                                  </HBox.margin>
-                              </ChoiceBox>
+                              </Label>
+                              <VBox>
+                                 <children>
+                                    <ComboBox fx:id="category" maxHeight="25.0" maxWidth="250.0" minHeight="25.0" minWidth="270.0" prefHeight="25.0" prefWidth="270.0" promptText="Category">
+                                       <VBox.margin>
+                                          <Insets />
+                                       </VBox.margin>
+                                    </ComboBox>
+                                    <ComboBox fx:id="database" maxHeight="25.0" maxWidth="270.0" minHeight="25.0" minWidth="270.0" prefHeight="25.0" prefWidth="270.0" promptText="Database">
+                                       <VBox.margin>
+                                          <Insets top="10.0" />
+                                       </VBox.margin>
+                                    </ComboBox>
+                                 </children>
+                                 <HBox.margin>
+                                    <Insets left="10.0" />
+                                 </HBox.margin>
+                              </VBox>
                            </children>
                            <VBox.margin>
                               <Insets left="10.0" />
@@ -138,9 +151,9 @@
                                  </HBox.margin>
                                  <items>
                                     <FXCollections fx:factory="observableArrayList">
-                                       <String fx:value="Pearson correlation coefficient"/>
-                                       <String fx:value="OnceEuclidian distance"/>
-                                       <String fx:value="Sandelin-Wasserman function"/>
+                                       <String fx:value="Pearson correlation coefficient" />
+                                       <String fx:value="OnceEuclidian distance" />
+                                       <String fx:value="Sandelin-Wasserman function" />
                                     </FXCollections>
                                  </items>
                               </ChoiceBox>

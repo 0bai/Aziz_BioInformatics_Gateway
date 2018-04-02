@@ -18,11 +18,18 @@ public class MotifMatchingScript extends Script {
     private SimpleIntegerProperty overlap;
 
     public MotifMatchingScript() {
-        outputName = new SimpleStringProperty();
-        overWrite = new SimpleBooleanProperty();
-        outputType = new SimpleBooleanProperty();
-
+        this.outputName = new SimpleStringProperty();
+        this.overWrite = new SimpleBooleanProperty();
+        this.outputType = new SimpleBooleanProperty();
+        this.alignedCols = new SimpleBooleanProperty();
+        this.db = new SimpleStringProperty();
+        this.comparisonFunc = new SimpleIntegerProperty();
+        this.threshold = new SimpleDoubleProperty();
+        this.significance = new SimpleStringProperty();
+        this.overlap = new SimpleIntegerProperty();
     }
+
+
 
     public SimpleStringProperty getOutputName() {
         return outputName;
