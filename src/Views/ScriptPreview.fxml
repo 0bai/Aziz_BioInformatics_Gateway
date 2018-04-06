@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane id="AnchorPane" maxHeight="500.0" maxWidth="400.0" minHeight="500.0" minWidth="400.0" prefHeight="500.0" prefWidth="400.0" stylesheets="@../Resources/bootstrap3.css" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controllers.ScriptPreviewController">
+<AnchorPane id="AnchorPane" maxHeight="500.0" maxWidth="1200.0" minHeight="500.0" minWidth="1200.0" prefHeight="500.0" prefWidth="1200.0" stylesheets="@../Resources/bootstrap3.css" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controllers.ScriptPreviewController">
    <children>
       <BorderPane id="header" layoutX="10.0" layoutY="10.0" maxHeight="600.0" maxWidth="400.0" minHeight="500.0" minWidth="400.0" prefHeight="500.0" prefWidth="400.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <top>
@@ -33,7 +33,7 @@
             </Pane>
          </top>
          <bottom>
-            <ButtonBar id="header" maxHeight="50.0" maxWidth="400.0" minHeight="50.0" minWidth="400.0" prefHeight="50.0" prefWidth="400.0" BorderPane.alignment="CENTER">
+            <ButtonBar id="header" maxHeight="50.0" maxWidth="1200.0" minHeight="50.0" minWidth="1200.0" prefHeight="50.0" prefWidth="1200.0" BorderPane.alignment="CENTER">
                <buttons>
                   <ProgressIndicator fx:id="loadingIndicator" maxHeight="35.0" minHeight="35.0" prefHeight="35.0" visible="false" />
                   <Button fx:id="submit" maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#submit" text="Submit" translateX="-10.0" translateY="4.0" />
@@ -41,9 +41,9 @@
             </ButtonBar>
          </bottom>
          <center>
-            <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
+            <VBox maxWidth="1200.0" minWidth="1200.0" prefHeight="200.0" prefWidth="1200.0" BorderPane.alignment="CENTER">
                <children>
-                  <TextArea fx:id="scriptPreviewField" maxHeight="380.0" maxWidth="400.0" minHeight="380.0" minWidth="400.0" prefHeight="380.0" prefWidth="400.0" />
+                  <TextArea fx:id="scriptPreviewField" maxHeight="380.0" maxWidth="1200.0" minHeight="380.0" minWidth="1200.0" prefHeight="380.0" prefWidth="1200.0" />
                </children>
             </VBox>
          </center>

@@ -24,9 +24,9 @@
                   <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#ffffff00" height="365.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.5" width="380.0" />
                   <VBox maxHeight="380.0" maxWidth="380.0" minHeight="380.0" minWidth="380.0" prefHeight="380.0" prefWidth="380.0" StackPane.alignment="CENTER_LEFT">
                      <children>
-                        <RadioButton fx:id="motifDiscovery" mnemonicParsing="false" selected="true" text="Motif Discovery">
+                        <RadioButton fx:id="MotifMatching" mnemonicParsing="false" selected="true" text="Motif Matching">
                            <padding>
-                              <Insets bottom="10.0" top="20.0" />
+                              <Insets bottom="10.0" />
                            </padding>
                            <VBox.margin>
                               <Insets left="10.0" />
@@ -38,10 +38,7 @@
                               <ToggleGroup fx:id="Tests" />
                            </toggleGroup>
                         </RadioButton>
-                        <RadioButton fx:id="MotifMatching" mnemonicParsing="false" text="Motif Matching" toggleGroup="$Tests">
-                           <padding>
-                              <Insets bottom="10.0" />
-                           </padding>
+                        <RadioButton fx:id="MotifScanning" mnemonicParsing="false" text="Fast Motif Discovery" toggleGroup="$Tests">
                            <VBox.margin>
                               <Insets left="10.0" />
                            </VBox.margin>
@@ -49,7 +46,10 @@
                               <Font size="15.0" />
                            </font>
                         </RadioButton>
-                        <RadioButton fx:id="MotifScanning" mnemonicParsing="false" text="Motif Scanning" toggleGroup="$Tests">
+                        <RadioButton fx:id="motifDiscovery" mnemonicParsing="false" text="Motif Discovery" toggleGroup="$Tests">
+                           <padding>
+                              <Insets bottom="10.0" top="20.0" />
+                           </padding>
                            <VBox.margin>
                               <Insets left="10.0" />
                            </VBox.margin>

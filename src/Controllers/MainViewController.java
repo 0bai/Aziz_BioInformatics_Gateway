@@ -7,8 +7,6 @@ import Models.SSHTask;
 import Models.SSHWrapper;
 import Models.Script;
 import com.jcraft.jsch.ChannelSftp;
-import java.awt.Desktop;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;

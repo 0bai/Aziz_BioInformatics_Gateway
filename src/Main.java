@@ -17,6 +17,7 @@ public class Main extends Application {
         primaryStage.setTitle("Aziz Bioinformatics Gateway");
       //  new SignInViewController().launch(primaryStage);
         new WizardController().launch(new Stage());
+        
     }
 
     public static void main(String[] args) {

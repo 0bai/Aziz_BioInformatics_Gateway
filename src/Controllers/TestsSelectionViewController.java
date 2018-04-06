@@ -8,7 +8,6 @@ package Controllers;
 import Models.FastMotifMatchingScript;
 import Models.MotifDiscoveryScript;
 import Models.MotifMatchingScript;
-import Models.MotifScanningScript;
 import Models.WizardView;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -50,15 +49,12 @@ public class TestsSelectionViewController extends WizardView implements Initiali
         if (MotifMatching.isSelected()) {
             super.wizard.script = new MotifMatchingScript();
             super.wizard.test = 0;
-        } else if (MotifScanning.isSelected()) {
-            super.wizard.script = new MotifScanningScript();
-            super.wizard.test = 1;
         } else if (motifDiscovery.isSelected()) {
             super.wizard.script = new MotifDiscoveryScript();
             super.wizard.test = 2;
         } else {
             super.wizard.script = new FastMotifMatchingScript();
-            super.wizard.test = 3;
+            super.wizard.test = 1;
         }
         super.wizard.next(event);
     }
