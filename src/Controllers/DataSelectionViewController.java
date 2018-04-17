@@ -66,8 +66,6 @@ public class DataSelectionViewController extends WizardView implements Initializ
         } else {
             AlertBox.display("Input Error!", "Please select an input file");
         }
-
-        super.wizard.next(event);
     }
 
     public void constractLocalTree() {

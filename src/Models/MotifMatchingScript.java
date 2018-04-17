@@ -71,7 +71,7 @@ public class MotifMatchingScript extends Script {
         return (super.toString() + "cd /home/" + SSHWrapper.username + "/app/meme/bin\n"
                 + "./tomtom " + " -o" + (overWrite.getValue() ? "c" : "") + SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "jobs/" + outputName.getValue()
                 + (outputType.getValue() ? " -text" : "") + (alignedCols.getValue() ? " -incomplete-scores" : "") + " -min-overlap " + overlap.getValue() + (significance.getValueSafe().equalsIgnoreCase("E") ? " -evalue" : "") + " -thresh " + threshold.getValue() + " -dist " + (comparisonFunc.getValue() == 0 ? "pearson " : comparisonFunc.getValue() == 1 ? " ed " : " sandelin ")
-                + SSHWrapper.GetABGFolder() + "datasets/" + super.getInputFile().getValue() + " " + db.getValueSafe());
+                + SSHWrapper.GetRemoteHomeFolder()+SSHWrapper.GetABGFolder() + "datasets/" + super.getInputFile().getValue() + " " + db.getValueSafe());
     }
 
     public void submit() {

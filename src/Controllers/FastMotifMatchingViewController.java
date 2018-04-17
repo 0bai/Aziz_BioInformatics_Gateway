@@ -1,31 +1,19 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package Controllers;
 
+import Models.FastMotifMatchingScript;
 import Models.WizardView;
 import java.net.URL;
 import java.util.ResourceBundle;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.RadioButton;
-import javafx.scene.control.Slider;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.TextField;
-import javafx.scene.control.ToggleGroup;
 
-/**
- * FXML Controller class
- *
- * @author OBAI
- */
 public class FastMotifMatchingViewController extends WizardView implements Initializable {
+
     @FXML
     private Button back;
     @FXML
@@ -33,58 +21,35 @@ public class FastMotifMatchingViewController extends WizardView implements Initi
     @FXML
     private TextField outputName;
     @FXML
-    private CheckBox overWrite;
+    private Spinner<Integer> motifNumber;
     @FXML
-    private CheckBox textOut;
+    private Spinner<Integer> motifLength;
     @FXML
-    private RadioButton DNA;
-    @FXML
-    private ToggleGroup inputType;
-    @FXML
-    private RadioButton RNA;
-    @FXML
-    private RadioButton Protein;
-    @FXML
-    private ChoiceBox<?> occurrence;
-    @FXML
-    private Spinner<?> motifNumber;
-    @FXML
-    private Spinner<?> minMotifSites;
-    @FXML
-    private Spinner<?> maxMotifSites;
-    @FXML
-    private CheckBox motifExact;
-    @FXML
-    private Slider bias;
-    @FXML
-    private Spinner<?> motifLength;
-    @FXML
-    private Spinner<?> motifLengthMin;
-    @FXML
-    private Spinner<?> motifLengthMax;
-    @FXML
-    private Spinner<?> gapOpen;
-    @FXML
-    private Spinner<?> gapExtend;
-    @FXML
-    private CheckBox trimming;
-    @FXML
-    private CheckBox endGaps;
+    private Spinner<Integer> mutations;
 
-    /**
-     * Initializes the controller class.
-     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        // TODO
-    }    
+    }
 
     @FXML
     private void back(ActionEvent event) {
+        super.wizard.back(event);
     }
 
     @FXML
     private void next(ActionEvent event) {
+        ((FastMotifMatchingScript) super.wizard.script).getOutputName().bindBidirectional(outputName.textProperty());
+        ((FastMotifMatchingScript) super.wizard.script).getMotifLength().bind(motifLength.valueProperty());
+        ((FastMotifMatchingScript) super.wizard.script).getMotifNumber().bind(motifNumber.valueProperty());
+        ((FastMotifMatchingScript) super.wizard.script).getMutations().bind(mutations.valueProperty());
+        super.wizard.script.setScriptVal(new SimpleStringProperty(((FastMotifMatchingScript) super.wizard.script).toString()));
+        if (Validate()) {
+            super.wizard.next(event);
+        }
     }
-    
+
+    private boolean Validate() {
+        return !outputName.getText().trim().isEmpty();
+    }
+
 }

@@ -77,6 +77,7 @@ public class WizardController {
         }
         controllers.get(current).setWizard(this);
         if (current == controllers.size() - 1) {
+            stage.setX(10);
             ((ScriptPreviewController) controllers.get(current)).setText();
         }
         stage.setScene(scenes.get(current));
