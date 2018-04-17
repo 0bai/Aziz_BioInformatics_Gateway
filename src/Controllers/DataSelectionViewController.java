@@ -42,7 +42,7 @@ public class DataSelectionViewController extends WizardView implements Initializ
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         constractLocalTree();
-        // constractRemoteTree();
+        constractRemoteTree();
     }
 
     @FXML
@@ -54,18 +54,18 @@ public class DataSelectionViewController extends WizardView implements Initializ
     @FXML
     private void next(ActionEvent event
     ) {
-//        if (!(localBrowser.getSelectionModel().getSelectedItem()==null)) {
-//            Platform.runLater(()->loadingIndicator.setVisible(true));
-//            wizard.script.uploadInputFile(localBrowser.getSelectionModel().getSelectedItem().getValue().getAbsolutePath());
-//            while(wizard.script.th.isAlive()){}
-//            super.wizard.script.getInputFile().bind(new SimpleStringProperty(SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "datasets/" + localBrowser.getSelectionModel().getSelectedItem().getValue().getName()));
-//            super.wizard.next(event);
-//        } else if (!azizBrowser.getSelectionModel().isEmpty()) {
-//            super.wizard.script.getInputFile().bind(new SimpleStringProperty(azizBrowser.getSelectionModel().getSelectedItem().getValue().getFilename()));
-//            super.wizard.next(event);
-//        } else {
-//            AlertBox.display("Input Error!", "Please select an input file");
-//        }
+        if (!(localBrowser.getSelectionModel().getSelectedItem()==null)) {
+            Platform.runLater(()->loadingIndicator.setVisible(true));
+            wizard.script.uploadInputFile(localBrowser.getSelectionModel().getSelectedItem().getValue().getAbsolutePath());
+            while(wizard.script.th.isAlive()){}
+            super.wizard.script.getInputFile().bind(new SimpleStringProperty(SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "datasets/" + localBrowser.getSelectionModel().getSelectedItem().getValue().getName()));
+            super.wizard.next(event);
+        } else if (!azizBrowser.getSelectionModel().isEmpty()) {
+            super.wizard.script.getInputFile().bind(new SimpleStringProperty(azizBrowser.getSelectionModel().getSelectedItem().getValue().getFilename()));
+            super.wizard.next(event);
+        } else {
+            AlertBox.display("Input Error!", "Please select an input file");
+        }
 
         super.wizard.next(event);
     }

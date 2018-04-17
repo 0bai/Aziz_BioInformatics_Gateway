@@ -8,7 +8,6 @@ package Controllers;
 import Models.WizardView;
 import java.net.URL;
 import java.util.ResourceBundle;
-import javafx.application.Platform;
 import static javafx.application.Platform.runLater;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -18,11 +17,6 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextArea;
 import javafx.stage.WindowEvent;
 
-/**
- * FXML Controller class
- *
- * @author OBAI
- */
 public class ScriptPreviewController extends WizardView implements Initializable {
 
     @FXML

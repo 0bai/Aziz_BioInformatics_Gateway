@@ -2,17 +2,21 @@ package Controllers;
 
 import Models.Database;
 import Models.MotifMatchingScript;
+import Models.SSHListener;
+import Models.SSHTask;
+import Models.SSHWrapper;
 import Models.WizardView;
+import com.jcraft.jsch.ChannelSftp;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.URL;
 import java.util.ArrayList;
-import static java.util.Collections.list;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Scanner;
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
@@ -29,7 +33,7 @@ import javafx.scene.control.Slider;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.TextField;
 
-public class MotifMatchingViewController extends WizardView implements Initializable {
+public class MotifMatchingViewController extends WizardView implements Initializable, SSHListener {
 
     @FXML
     private Button back;
@@ -59,6 +63,7 @@ public class MotifMatchingViewController extends WizardView implements Initializ
     private List<Database> Clist;
     private List<Database> Dlist;
     private HashMap<Integer, List<Database>> items;
+    private String response;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -67,6 +72,21 @@ public class MotifMatchingViewController extends WizardView implements Initializ
         items = new HashMap<>();
         database.getSelectionModel().select(0);
         comparison.getSelectionModel().select(0);
+        initSlider();
+        try {
+            showDB();
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(MotifMatchingViewController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        category.getItems().setAll(FXCollections.observableArrayList(Clist));
+        category.valueProperty().addListener((obsv, oldVal, newVal) -> {
+            database.getSelectionModel().clearSelection();
+            database.getItems().setAll(items.get(category.getSelectionModel().selectedIndexProperty().getValue()));
+        });
+
+    }
+
+    private void initSlider() {
         thresh.getSelectionModel().select(0);
         slider.setBlockIncrement(5);
         slider.setMax(100.0);
@@ -95,13 +115,12 @@ public class MotifMatchingViewController extends WizardView implements Initializ
                 slider.setValueChanging(false);
             });
         });
-        File file = new File("/Volumes/MacintoshHDD/OBAI/Downloads/motif_databases/motif_db.csv");
-        Scanner in = null;
-        try {
-            in = new Scanner(file);
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(MotifMatchingViewController.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    }
+
+
+
+    private synchronized void showDB() throws FileNotFoundException {
+        Scanner in = new Scanner(new File("motif_db.csv"));
         for (int i = 0; i < 10; i++) {
             in.nextLine();
         }
@@ -119,12 +138,6 @@ public class MotifMatchingViewController extends WizardView implements Initializ
             }
         }
         items.put(count, Dlist);
-        category.getItems().setAll(FXCollections.observableArrayList(Clist));
-        category.valueProperty().addListener((obsv, oldVal, newVal) -> {
-            database.getSelectionModel().clearSelection();
-            database.getItems().setAll(items.get(category.getSelectionModel().selectedIndexProperty().getValue()));
-        });
-
     }
 
     @FXML
@@ -139,11 +152,10 @@ public class MotifMatchingViewController extends WizardView implements Initializ
         ((MotifMatchingScript) super.wizard.script).getOutputType().bindBidirectional(textOut.selectedProperty());
         ((MotifMatchingScript) super.wizard.script).getAlignedCols().bindBidirectional(completeRows.selectedProperty());
         ((MotifMatchingScript) super.wizard.script).getComparisonFunc().bind(comparison.getSelectionModel().selectedIndexProperty());
-        ((MotifMatchingScript) super.wizard.script).getDb().bind(new SimpleStringProperty(database.getSelectionModel().getSelectedItem().toString()));
+        ((MotifMatchingScript) super.wizard.script).getDb().bind(new SimpleStringProperty(database.getSelectionModel().getSelectedItem().getPath()));
         ((MotifMatchingScript) super.wizard.script).getOverlap().bind(overlap.valueProperty());
         ((MotifMatchingScript) super.wizard.script).getSignificance().bindBidirectional(thresh.valueProperty());
         ((MotifMatchingScript) super.wizard.script).getThreshold().bindBidirectional(slider.valueProperty());
-
         super.wizard.script.setScriptVal(new SimpleStringProperty(((MotifMatchingScript) super.wizard.script).toString()));
         if (Validate()) {
             super.wizard.next(event);
@@ -152,6 +164,27 @@ public class MotifMatchingViewController extends WizardView implements Initializ
 
     private boolean Validate() {
         return !outputName.getText().trim().isEmpty();
+    }
+
+    @Override
+    public void sshResponse(String strCommand, String strResponse) {
+        System.out.println(strResponse+"!");
+        response = strResponse;
+    }
+
+    @Override
+    public void FileDownloadResponse(String strFilePath, Boolean bStatus) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void FileUploadResponse(String strFilePath, Boolean bStatus) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void GotFilesList(String strDirecory, Vector<ChannelSftp.LsEntry> lstItems) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }

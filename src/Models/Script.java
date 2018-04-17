@@ -1,10 +1,13 @@
 package Models;
 
 import com.jcraft.jsch.ChannelSftp;
+import java.io.Serializable;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.beans.property.*;
 
-public class Script  implements SSHListener {
+public class Script implements SSHListener, Serializable {
 
     private SimpleStringProperty name;
     private SimpleStringProperty wallTime;
@@ -13,6 +16,7 @@ public class Script  implements SSHListener {
     private SimpleIntegerProperty nodes;
     private SimpleIntegerProperty threads;
     private SimpleStringProperty inputFile;
+    protected SimpleStringProperty outputName;
     private SimpleStringProperty scriptVal;
     public Thread th;
     public String jobID = "";
@@ -37,7 +41,14 @@ public class Script  implements SSHListener {
         this.threads = threads;
         this.inputFile = inputFile;
     }
-    
+
+    public SimpleStringProperty getOutputName() {
+        return outputName;
+    }
+
+    public void setOutputName(SimpleStringProperty outputName) {
+        this.outputName = outputName;
+    }
 
     public SimpleStringProperty getName() {
         return name;
@@ -121,21 +132,23 @@ public class Script  implements SSHListener {
 
     @Override
     public String toString() {
-        //  System.out.println(nodes.getValue());
         return "#PBS -l select=" + nodes.getValue() + ":ncpus=" + threads.getValue() + "\n"
                 + "#PBS -q " + queue.getValue() + (month.getValue() ? "-1m" : "") + "\n"
                 + "#PBS -N " + name.getValue() + "\n";
     }
 
-    public void submit() {
-        while (th != null && th.isAlive()) {
+    public void submit() throws InterruptedException {
+        if (th != null) {
+            th.join();
         }
-        th = new Thread(new SSHTask(this, "/bin/echo " + scriptVal + " > /home/" + SSHWrapper.username + "/ABG/jobs/" + name));
+        th = new Thread(new SSHTask(this, "/bin/echo " + scriptVal.getValue() + " > /home/" + SSHWrapper.username + "/ABG/jobs/" + name.getValue()));
         th.setDaemon(true);
         th.start();
-        th = new Thread(new SSHTask(this, "/opt/pbs/default/bin/qsub /home/" + SSHWrapper.username + "/ABG/jobs/" + name));
+        th.join();
+        th = new Thread(new SSHTask(this, "/opt/pbs/default/bin/qsub /home/" + SSHWrapper.username + "/ABG/jobs/" + name.getValue()));
         th.setDaemon(true);
         th.start();
+        th.join();
     }
 
     public void uploadInputFile(String path) {
@@ -147,7 +160,7 @@ public class Script  implements SSHListener {
 
     @Override
     public void sshResponse(String strCommand, String strResponse) {
-        System.out.println(strResponse);
+        System.out.println(strResponse + "!");
         if (strCommand.contains("qsub")) {
             jobID = strResponse.split("\\.")[0];
         }
@@ -160,7 +173,7 @@ public class Script  implements SSHListener {
 
     @Override
     public void FileUploadResponse(String strFilePath, Boolean bStatus) {
-        System.out.println("File Uploaded");
+        System.out.println("File Uploaded!");
     }
 
     @Override

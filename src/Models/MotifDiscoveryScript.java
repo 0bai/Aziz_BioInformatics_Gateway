@@ -1,5 +1,7 @@
 package Models;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -7,7 +9,6 @@ import javafx.beans.property.SimpleStringProperty;
 
 public class MotifDiscoveryScript extends Script {
 
-    private SimpleStringProperty outputName;
     private SimpleBooleanProperty overWrite;
     private SimpleBooleanProperty outputType;
     private SimpleStringProperty inputType;
@@ -116,7 +117,7 @@ public class MotifDiscoveryScript extends Script {
     @Override
     public String toString() {
         return (super.toString() + "cd /home/" + SSHWrapper.username + "/app/meme/bin\n"
-                + "./meme " + super.getInputFile() + " " + outputName.getValue() + " -" + inputType.getValue() + " -o" + (overWrite.getValue() ? "c" : "") + SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "jobs/" + outputName.getName()
+                + "./meme " + SSHWrapper.GetABGFolder() + "datasets/" + super.getInputFile().getValue() + " " + " -" + inputType.getValue() + " -o" + (overWrite.getValue() ? "c" : "") + SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "jobs/" + outputName.getValue()
                 + (outputType.getValue() ? " -text" : "") + (ocurrence.getValue().isEmpty() ? "" : " -mod " + ocurrence.getValue()) + " -nmotif " + motifNumber.getValue() + (exactMotifSites.getValue() ? " -nsites " + maxMotifSites.getValue() : "")
                 + " -minsites " + minMotifSites.getValue() + " -maxsites " + maxMotifSites.getValue() + " -wnsites " + bias.getValue() + " -w " + motifLength.getValue()
                 + " -minw " + minMotifLength.getValue() + " -maxw " + maxMotifLength.getValue() + (trimming.getValue() ? " -nomatrim " : "") + "-wg " + gapOpeningCost.getValue() + " -ws " + gapExtensionCost.getValue() + (noEndGaps.getValue() ? " -noendgaps" : ""));
@@ -124,6 +125,10 @@ public class MotifDiscoveryScript extends Script {
 
     public void submit() {
         super.setScriptVal(new SimpleStringProperty(toString()));
-        super.submit();
+        try {
+            super.submit();
+        } catch (InterruptedException ex) {
+            Logger.getLogger(MotifDiscoveryScript.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 }

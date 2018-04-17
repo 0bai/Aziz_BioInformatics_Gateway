@@ -10,13 +10,14 @@ public class JobItem implements Serializable {
     public String DateCreated;
     public String CpuTime;
     public String WallTime;
+    public String outputName;
     public String CPUs;
     public String Nodes;
     public String Status;
-  //  public Script script;
-//    public File output;
 
-    public JobItem(String Id, String DateCreated, String Status, String name, String wallTime, String cpusNum, String nodesNum, Script script) {
+    public File output;
+
+    public JobItem(String Id, String DateCreated, String Status, String name, String wallTime, String cpusNum, String nodesNum, String outputName) {
         this.Id = Id;
         this.DateCreated = DateCreated;
         this.Status = Status;
@@ -25,11 +26,10 @@ public class JobItem implements Serializable {
         this.CPUs = cpusNum;
         this.Nodes = nodesNum;
         this.CpuTime = "00:00:00";
-    //    this.script = script;
+        this.outputName = outputName;
     }
 
     public JobItem(String strStatus) {
-        //|321541          | STDIN           | shejazi0004     | cheistry | 86:41:12        | 606:38:17    | 24    | 1   | 12     |
         String info[] = strStatus.split("\\|");
         this.Id = info[1].trim();
         this.Name = info[2].trim();
@@ -103,22 +103,21 @@ public class JobItem implements Serializable {
         this.Status = Status;
     }
 
-//    public Script getScript() {
-//        return script;
-//    }
-//
-//    public void setScript(Script script) {
-//        this.script = script;
-//    }
-//
-//    public File getOutput() {
-//        return output;
-//    }
-//
-//    public void setOutput(File output) {
-//        this.output = output;
-//    }
-//    
-    
+    public String getOutputName() {
+        return outputName;
+    }
+
+    public void setOutputName(String outputName) {
+        this.outputName = outputName;
+    }
+
+
+    public File getOutput() {
+        return output;
+    }
+
+    public void setOutput(File output) {
+        this.output = output;
+    }
 
 }

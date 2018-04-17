@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package Controllers;
 
 import Models.AlertBox;
@@ -37,11 +33,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 
-/**
- * FXML Controller class
- *
- * @author OBAI
- */
 public class SignInViewController implements Initializable, SSHListener {
 
     private Stage stage;
@@ -93,7 +84,6 @@ public class SignInViewController implements Initializable, SSHListener {
         fxmlLoader.setController(this);
         try {
             parent = (Parent) fxmlLoader.load();
-            // set height and width here for this login scene
             scene = new Scene(parent);
         } catch (IOException ex) {
             System.out.println("Error displaying login window");
@@ -109,8 +99,6 @@ public class SignInViewController implements Initializable, SSHListener {
     }
 
     public void SignIn() throws UnknownHostException, IOException, Exception, Throwable {
-//        usernameTF.setText("obai");
-//        passwordF.setText("0ba1Alnajjar");
         usernameTF.setText("onajjar0001");
         passwordF.setText("hphf9Nr2X");
         if (!usernameTF.getText().equalsIgnoreCase("") && !passwordF.getText().equalsIgnoreCase("")) {
@@ -162,11 +150,7 @@ public class SignInViewController implements Initializable, SSHListener {
                 stage.close();
                 try {
                     new MainViewController().launch(stage);
-                } catch (IOException | ClassNotFoundException ex) {
-                    Logger.getLogger(SignInViewController.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (BackingStoreException ex) {
-                    Logger.getLogger(SignInViewController.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (InterruptedException ex) {
+                } catch (IOException | ClassNotFoundException | BackingStoreException | InterruptedException ex) {
                     Logger.getLogger(SignInViewController.class.getName()).log(Level.SEVERE, null, ex);
                 }
             });

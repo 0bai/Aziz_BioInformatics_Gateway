@@ -29,7 +29,7 @@ public class Jobs implements SSHListener {
     private ObjectInputStream objectInput;
     static SSHTask AuthTasks;
     static Preferences pref;
-    
+
     File file;
     SimpleStringProperty fileu = new SimpleStringProperty();
     public Thread th = new Thread();
@@ -68,7 +68,6 @@ public class Jobs implements SSHListener {
 
     private void prepData() throws IOException, FileNotFoundException, ClassNotFoundException {
         try {
-            //figure a way to do this.
             File backUp = (File) getClass().getClassLoader().getResource(pref.absolutePath() + File.separator + "bData.SER").getContent();
             File data = (File) getClass().getClassLoader().getResource(pref.absolutePath() + File.separator + "Data.SER").getContent();
             if (backUp.lastModified() < data.lastModified()) {
@@ -114,7 +113,8 @@ public class Jobs implements SSHListener {
                 if (strResponse.contains("Unknown")) {
                     job.setStatus("Error");
                 } else {
-                    switch (strResponse.split(" ")[18]) {
+                    strResponse = strResponse.replaceAll(" +", " ");
+                    switch (strResponse.split(" ")[16]) {
                         case "R":
                             job.setStatus("Running");
                             break;
@@ -150,7 +150,7 @@ public class Jobs implements SSHListener {
 
     @Override
     public void sshResponse(String strCommand, String strResponse) {
-        System.out.println(strResponse);
+       
         if (strCommand.contains("qstat")) {
             updateJob(strCommand, strResponse);
         }
@@ -168,12 +168,12 @@ public class Jobs implements SSHListener {
 
     @Override
     public void FileUploadResponse(String strFilePath, Boolean bStatus) {
-        System.out.println("Uploaded");
+
     }
 
     @Override
     public void GotFilesList(String strDirecory, Vector<ChannelSftp.LsEntry> lstItems) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Not supported yet."); 
     }
 
 }

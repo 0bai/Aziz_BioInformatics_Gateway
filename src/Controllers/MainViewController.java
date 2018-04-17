@@ -7,6 +7,8 @@ import Models.SSHTask;
 import Models.SSHWrapper;
 import Models.Script;
 import com.jcraft.jsch.ChannelSftp;
+import java.awt.Desktop;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
@@ -25,6 +27,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
@@ -53,16 +56,33 @@ public class MainViewController implements Initializable, SSHListener {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-//        jobsTable.selectionModelProperty().addListener((Observable, oldValue, newValue) -> {
-//            if (((JobItem) newValue).getStatus().equalsIgnoreCase("Finished")) {
-//                try {
-//                    showOutput(((JobItem) newValue));
-//                } catch (IOException ex) {
-//                    Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
-//                }
-//            }
-//
-//        });
+        jobsTable.setRowFactory(tableView -> {
+            TableRow<JobItem> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && (!row.isEmpty()) && row.getItem().getStatus().equalsIgnoreCase("Finished")) {
+                    try {
+                        try {
+                            showOutput(row.getItem());
+                        } catch (InterruptedException ex) {
+                            Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    } catch (IOException ex) {
+                        Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            });
+            return row;
+
+        });
+        getDB();
+    }
+
+    private void getDB() {
+        File tmp = new File("motif_db.csv");
+        th = new Thread(new SSHTask(this, SSHWrapper.GetRemoteHomeFolder() + "/app/meme/db/motif_databases/motif_db.csv", tmp.getAbsolutePath(), SSHTask.TaskType.DownloadFile));
+        th.setDaemon(true);
+        th.start();
+
     }
 
     public void updatingDaemon() {
@@ -71,12 +91,12 @@ public class MainViewController implements Initializable, SSHListener {
                 try {
                     Thread.sleep(15000);
                     if (!wizard.script.jobID.isEmpty() && flag) {
-                        jobs.addJob(new JobItem(wizard.script.jobID, LocalDate.now().toString(), "Queued", wizard.script.getName().getValue(), wizard.script.getWallTime().getValue(), wizard.script.getNodes() + "", wizard.script.getThreads() + "", wizard.script));
+                        System.out.println(wizard.script.getOutputName().getValue() + "!!!!!!!!!!!");
+                        jobs.addJob(new JobItem(wizard.script.jobID, LocalDate.now().toString(), "Queued", wizard.script.getName().getValue(), wizard.script.getWallTime().getValue(), wizard.script.getNodes().getValue() + "", wizard.script.getThreads().getValue() + "", wizard.script.getOutputName().getValue()));
                         jobsTable.refresh();
                         wizard.script = new Script();
                     }
                     flag = false;
-
                     jobs.saveData();
                 } catch (InterruptedException | IOException ex) {
                     Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
@@ -117,18 +137,31 @@ public class MainViewController implements Initializable, SSHListener {
         stage.show();
 
     }
-//
-//    private void showOutput(JobItem job) throws IOException {
-//        if (job.getOutput() == null) {
-//            File output = new File("output");
-//            th = new Thread(new SSHTask(this, SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "/jobs/" + job.getScript().getName(), output.getAbsolutePath(), SSHTask.TaskType.DownloadFile));
-//            th.start();
-//            while(th.isAlive()){}
-//            job.setOutput(output);
-//        }
-//        Desktop.getDesktop().browse(job.getOutput().toURI());
-//        
-//    }
+
+    private void showOutput(JobItem job) throws IOException, InterruptedException {
+        if (job.getOutput() == null) {
+            File output = new File(job.getOutputName());
+            th = new Thread(new SSHTask(this, SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "/jobs/" + job.getOutputName(), output.getAbsolutePath(), SSHTask.TaskType.DownloadFile));
+            th.setDaemon(true);
+            th.start();
+            th.join();
+            if (output.exists()) {
+                job.setOutput(output);
+                Desktop.getDesktop().browse(job.getOutput().toURI());
+            } else {
+                output = new File(job.getName());
+                th = new Thread(new SSHTask(this, SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "/jobs/" + job.getName(), output.getAbsolutePath(), SSHTask.TaskType.DownloadFile));
+                th.setDaemon(true);
+                th.start();
+                th.join();
+                job.setOutput(output);
+                Desktop.getDesktop().browse(job.getOutput().toURI());
+            }
+        } else {
+            Desktop.getDesktop().browse(job.getOutput().toURI());
+        }
+
+    }
 
     private void loadContent() throws IOException, FileNotFoundException, ClassNotFoundException, BackingStoreException, InterruptedException {
         progressIndicator.setVisible(true);
@@ -169,7 +202,6 @@ public class MainViewController implements Initializable, SSHListener {
 
     @Override
     public void sshResponse(String strCommand, String strResponse) {
-
         Platform.runLater(() -> progressIndicator.setVisible(false));
         if (strResponse.contains("cannot")) {
             flag = true;
@@ -178,7 +210,7 @@ public class MainViewController implements Initializable, SSHListener {
 
     @Override
     public void FileDownloadResponse(String strFilePath, Boolean bStatus) {
-
+        System.out.println("Clear");
     }
 
     @Override

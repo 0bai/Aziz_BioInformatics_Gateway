@@ -37,9 +37,6 @@ public class WizardController {
         wizard.add(getClass().getResource("/Views/TestsSelectionView.fxml"));
         wizard.add(getClass().getResource("/Views/DataSelectionView.fxml"));
         wizard.add(getClass().getResource("/Views/PBSView.fxml"));
-        wizard.add(getClass().getResource("/Views/MotifMatchingView.fxml"));
-        wizard.add(getClass().getResource("/Views/FastMotifMatchingView.fxml"));
-        wizard.add(getClass().getResource("/Views/MotifDiscoveryView.fxml"));
         wizard.add(getClass().getResource("/Views/ScriptPreview.fxml"));
         selectedAzizFiles = new SimpleListProperty<>();
         loadScreen();
@@ -61,32 +58,26 @@ public class WizardController {
     }
 
     public void next(ActionEvent event) {
-        current++;
-        if (current == 1) {
+        if (++current == 3) {
             switch (test) {
                 case 0:
-                    scenes.remove(4);
-                    scenes.remove(4);
-                    controllers.remove(4);
-                    controllers.remove(4);
+                    loadScreen(getClass().getResource("/Views/MotifMatchingView.fxml"));
+                    current--;
                     break;
                 case 1:
-                    scenes.remove(3);
-                    scenes.remove(4);
-                    controllers.remove(3);
-                    controllers.remove(4);
+                    loadScreen(getClass().getResource("/Views/FastMotifMatchingView.fxml"));
+                    current--;
                     break;
                 case 2:
-                    scenes.remove(3);
-                    scenes.remove(3);
-                    controllers.remove(3);
-                    controllers.remove(3);
+                    loadScreen(getClass().getResource("/Views/MotifDiscoveryView.fxml"));
+                    current--;
                     break;
             }
-       }
+            test = -1;
+        }
         controllers.get(current).setWizard(this);
-        if (current == controllers.size()-1) {
-            ((ScriptPreviewController)controllers.get(current)).setText();
+        if (current == controllers.size() - 1) {
+            ((ScriptPreviewController) controllers.get(current)).setText();
         }
         stage.setScene(scenes.get(current));
     }
@@ -107,6 +98,19 @@ public class WizardController {
             scenes.add(scene);
         }
         controllers.get(0).setWizard(this);
+    }
+
+    private void loadScreen(URL url) {
+        FXMLLoader fxmlLoader = new FXMLLoader(url);
+        try {
+            parent = (Parent) fxmlLoader.load(url.openStream());
+            controllers.add(3, (WizardView) fxmlLoader.getController());
+            scene = new Scene(parent);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+        scenes.add(3, scene);
+
     }
 
 }
