@@ -82,7 +82,6 @@ public class MainViewController implements Initializable, SSHListener {
         th = new Thread(new SSHTask(this, SSHWrapper.GetRemoteHomeFolder() + "/app/meme/db/motif_databases/motif_db.csv", tmp.getAbsolutePath(), SSHTask.TaskType.DownloadFile));
         th.setDaemon(true);
         th.start();
-
     }
 
     public void updatingDaemon() {
@@ -168,8 +167,7 @@ public class MainViewController implements Initializable, SSHListener {
         thread = new Thread(new SSHTask(this, "/usr/bin/file /home/" + SSHWrapper.username + "/ABG/config/Data.SER"));
         thread.setDaemon(true);
         thread.start();
-        while (thread.isAlive()) {
-        }
+        thread.join();
         if (flag) {
             thread = new Thread(new SSHTask(this, "/bin/mkdir -p  /home/" + SSHWrapper.username + "/ABG/{config,datasets,jobs}"));
             thread.setDaemon(true);
@@ -178,8 +176,7 @@ public class MainViewController implements Initializable, SSHListener {
         } else {
             jobs = new Jobs();
             jobs.init();
-            while (jobs.th.isAlive()) {
-            }
+            jobs.th.join();
             updatingDaemon();
         }
         flag = false;

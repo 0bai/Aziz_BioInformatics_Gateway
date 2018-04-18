@@ -1,14 +1,11 @@
 package Models;
 
 import com.jcraft.jsch.ChannelSftp;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.concurrent.Task;
-//implements  AsyncTask<Void, Void, Vector<ChannelSftp.LsEntry>>
 
 public class SftpTask extends Task {
 
@@ -30,7 +27,6 @@ public class SftpTask extends Task {
                     + " must implement SSHListener");
         }
         mSourceFile = strSourceFile;
-        //mDestFile = strDestFile;
     }
 
     @Override
