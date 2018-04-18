@@ -67,7 +67,7 @@ public class MotifDiscoveryViewController extends WizardView implements Initiali
     private Spinner<Integer> maxMotifSites;
 
     private WizardController wizard;
-    private String ocurr[] = {"oops", "zoops", "anr"};
+    private String ocurr[] = {"zoops", "oops", "anr"};
 
     @FXML
 

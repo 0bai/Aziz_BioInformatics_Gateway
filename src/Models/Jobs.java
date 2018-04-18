@@ -128,7 +128,7 @@ public class Jobs implements SSHListener {
                             job.setStatus("Queued");
                     }
                     if (job.getStatus().equalsIgnoreCase("Running")) {
-                        job.setCpuTime(strResponse.split(" ")[17]);
+                        job.setCpuTime(strResponse.split(" ")[15]);
                     }
 
                 }

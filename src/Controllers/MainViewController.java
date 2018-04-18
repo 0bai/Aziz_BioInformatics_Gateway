@@ -6,6 +6,7 @@ import Models.SSHListener;
 import Models.SSHTask;
 import Models.SSHWrapper;
 import Models.Script;
+import Models.SftpTask;
 import com.jcraft.jsch.ChannelSftp;
 import java.awt.Desktop;
 import java.io.File;
@@ -20,12 +21,14 @@ import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
@@ -34,10 +37,12 @@ import javafx.stage.Stage;
 
 public class MainViewController implements Initializable, SSHListener {
 
+    private File ABG;
     private Stage stage;
     private Scene scene;
     private Parent parent;
     private Thread thread;
+    private Vector<ChannelSftp.LsEntry> list;
     public Jobs jobs;
     public boolean flag;
     public WizardController wizard = new WizardController();
@@ -49,9 +54,11 @@ public class MainViewController implements Initializable, SSHListener {
     @FXML
     ProgressIndicator progressIndicator;
     @FXML
-    TableView jobsTable;
+    TableView<JobItem> jobsTable;
     @FXML
     Pane pane;
+    @FXML
+    ContextMenu contextMenu;
     SimpleDoubleProperty sceneWidth;
 
     @Override
@@ -88,7 +95,7 @@ public class MainViewController implements Initializable, SSHListener {
         Thread th = new Thread(() -> {
             while (true) {
                 try {
-                    Thread.sleep(15000);
+                    Thread.sleep(10000);
                     if (!wizard.script.jobID.isEmpty() && flag) {
                         System.out.println(wizard.script.getOutputName().getValue() + "!!!!!!!!!!!");
                         jobs.addJob(new JobItem(wizard.script.jobID, LocalDate.now().toString(), "Queued", wizard.script.getName().getValue(), wizard.script.getWallTime().getValue(), wizard.script.getNodes().getValue() + "", wizard.script.getThreads().getValue() + "", wizard.script.getOutputName().getValue()));
@@ -138,31 +145,81 @@ public class MainViewController implements Initializable, SSHListener {
     }
 
     private void showOutput(JobItem job) throws IOException, InterruptedException {
-        if (job.getOutput() == null) {
-            File output = new File(job.getOutputName());
-            th = new Thread(new SSHTask(this, SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "/jobs/" + job.getOutputName(), output.getAbsolutePath(), SSHTask.TaskType.DownloadFile));
+        Platform.runLater(() -> progressIndicator.setVisible(true));
+        File textOut = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/" + "meme.txt");
+        File htmlOut = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/" + "meme.html");
+        File error = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/" + job.getName() + ".e" + job.getId());
+        if (!textOut.exists() && !htmlOut.exists() && !error.exists()) {
+            getOutputDirectory(job);
+        }
+        if (htmlOut.exists()) {
+            setHtmlURI(htmlOut, job);
+            showHtmlOutput(job);
+        }
+        if (textOut.exists()) {
+            setTextURI(textOut, job);
+            showTextOutput(job);
+        }
+        if (!error.exists()) {
+            getErrorFile(job, error);
+            showTextOutput(job);
+        }
+        Platform.runLater(() -> progressIndicator.setVisible(false));
+    }
+
+    private void getOutputDirectory(JobItem job) throws InterruptedException {
+        File output = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/");
+        output.mkdirs();
+        th = new Thread(new SftpTask(this, SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "jobs/" + job.getOutputName(), SftpTask.TaskType.ListFile));
+        th.setDaemon(true);
+        th.start();
+        th.join();
+        for (int i = 2; i < list.size(); i++) {
+            th = new Thread(new SSHTask(this, SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "jobs/" + job.getOutputName() + "/" + list.get(i).getFilename(), output.getAbsolutePath() + "/" + list.get(i).getFilename(), SSHTask.TaskType.DownloadFile));
             th.setDaemon(true);
             th.start();
             th.join();
-            if (output.exists()) {
-                job.setOutput(output);
-                Desktop.getDesktop().browse(job.getOutput().toURI());
-            } else {
-                output = new File(job.getName());
-                th = new Thread(new SSHTask(this, SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "/jobs/" + job.getName(), output.getAbsolutePath(), SSHTask.TaskType.DownloadFile));
-                th.setDaemon(true);
-                th.start();
-                th.join();
-                job.setOutput(output);
-                Desktop.getDesktop().browse(job.getOutput().toURI());
-            }
-        } else {
-            Desktop.getDesktop().browse(job.getOutput().toURI());
         }
+    }
 
+    private void getErrorFile(JobItem job, File error) throws InterruptedException {
+        th = new Thread(new SSHTask(this, SSHWrapper.GetRemoteHomeFolder() + "/*.e" + job.getId(), error.getAbsolutePath(), SSHTask.TaskType.DownloadFile));
+        th.setDaemon(true);
+        th.start();
+        th.join();
+        job.setOutputText(error.toURI());
+    }
+
+    private void setTextURI(File output, JobItem job) {
+        job.setOutputText(output.toURI());
+    }
+
+    private void setHtmlURI(File output, JobItem job) {
+        job.setOutputHTML(output.toURI());
+    }
+
+    private void showTextOutput(JobItem job) {
+        try {
+            Desktop.getDesktop().browse(job.getOutputText());
+        } catch (IOException ex) {
+            Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void showHtmlOutput(JobItem job) {
+        try {
+            Desktop.getDesktop().browse(job.getOutputHTML());
+        } catch (IOException ex) {
+            Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     private void loadContent() throws IOException, FileNotFoundException, ClassNotFoundException, BackingStoreException, InterruptedException {
+        ABG = new File(SSHWrapper.GetLocalHomeFolder() + "/ABG/");
+        if (!ABG.exists()) {
+            System.out.println(ABG.getAbsolutePath());
+            ABG.mkdir();
+        }
         progressIndicator.setVisible(true);
         thread = new Thread(new SSHTask(this, "/usr/bin/file /home/" + SSHWrapper.username + "/ABG/config/Data.SER"));
         thread.setDaemon(true);
@@ -177,10 +234,18 @@ public class MainViewController implements Initializable, SSHListener {
             jobs = new Jobs();
             jobs.init();
             jobs.th.join();
-            updatingDaemon();
         }
+        updatingDaemon();
         flag = false;
 
+    }
+
+    public void addJob() {
+        newJob();
+    }
+
+    public void removeJob() {
+        deleteJob();
     }
 
     public void newJob() {
@@ -193,8 +258,15 @@ public class MainViewController implements Initializable, SSHListener {
     }
 
     public void deleteJob() {
-        jobs.removeJob((JobItem) jobsTable.getSelectionModel().getSelectedItem());
+        if (!jobsTable.getSelectionModel().isEmpty() && jobsTable.getSelectionModel().getSelectedItem().getStatus().equalsIgnoreCase("Running")) {
+            th = new Thread(new SSHTask(this, "/opt/pbs/default/bin/qdel " + (jobsTable.getSelectionModel().getSelectedItem()).getId()));
+            th.setDaemon(true);
+            th.start();
 
+        }
+        new Thread(new SSHTask(this, "/bin/rm " + SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "jobs/" + jobsTable.getSelectionModel().getSelectedItem().getOutputName())).start();
+        new Thread(new SSHTask(this, "/bin/rm " + SSHWrapper.GetRemoteHomeFolder() + "/" + jobsTable.getSelectionModel().getSelectedItem().getName() + ".*" + jobsTable.getSelectionModel().getSelectedItem().getId())).start();
+        jobs.removeJob(jobsTable.getSelectionModel().getSelectedItem());
     }
 
     @Override
@@ -212,12 +284,51 @@ public class MainViewController implements Initializable, SSHListener {
 
     @Override
     public void FileUploadResponse(String strFilePath, Boolean bStatus) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
     public void GotFilesList(String strDirecory, Vector<ChannelSftp.LsEntry> lstItems) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        list = lstItems;
+    }
+
+    @FXML
+    private void showScript(ActionEvent event) throws InterruptedException, IOException {
+        Platform.runLater(() -> progressIndicator.setVisible(true));
+        if (!jobsTable.getSelectionModel().isEmpty()) {
+            JobItem job = jobsTable.getSelectionModel().getSelectedItem();
+            File script = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/script");
+            if (!script.exists()) {
+                script.mkdirs();
+                getScriptFile(job, script);
+            }
+
+            if (script.exists()) {
+                setScriptURI(job, script);
+                showScript(job);
+            }
+        }
+        Platform.runLater(() -> progressIndicator.setVisible(false));
+    }
+
+    private void showScript(JobItem job) throws IOException {
+        Desktop.getDesktop().browse(job.getScript());
+    }
+
+    private void setScriptURI(JobItem job, File script) throws IOException {
+        job.setScript(script.toURI());
+        Desktop.getDesktop().browse(job.getScript());
+    }
+
+    private void getScriptFile(JobItem job, File script) throws InterruptedException {
+        th = new Thread(new SSHTask(this, SSHWrapper.GetRemoteHomeFolder() + "/" + SSHWrapper.GetABGFolder() + "jobs/" + job.getName(), script.getAbsolutePath() + "/" + job.getName(), SSHTask.TaskType.DownloadFile));
+        th.setDaemon(true);
+        th.start();
+        th.join();
+    }
+
+    public void close() {
+        System.exit(0);
     }
 
 }

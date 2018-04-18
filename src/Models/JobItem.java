@@ -2,6 +2,7 @@ package Models;
 
 import java.io.File;
 import java.io.Serializable;
+import java.net.URI;
 
 public class JobItem implements Serializable {
 
@@ -14,8 +15,9 @@ public class JobItem implements Serializable {
     public String CPUs;
     public String Nodes;
     public String Status;
-
-    public File output;
+    public URI script;
+    public URI outputText;
+    public URI outputHTML;
 
     public JobItem(String Id, String DateCreated, String Status, String name, String wallTime, String cpusNum, String nodesNum, String outputName) {
         this.Id = Id;
@@ -111,13 +113,31 @@ public class JobItem implements Serializable {
         this.outputName = outputName;
     }
 
-
-    public File getOutput() {
-        return output;
+    public URI getScript() {
+        return script;
     }
 
-    public void setOutput(File output) {
-        this.output = output;
+    public void setScript(URI script) {
+        this.script = script;
     }
+
+    public URI getOutputText() {
+        return outputText;
+    }
+
+    public void setOutputText(URI outputText) {
+        this.outputText = outputText;
+    }
+
+    public URI getOutputHTML() {
+        return outputHTML;
+    }
+
+    public void setOutputHTML(URI outputHTML) {
+        this.outputHTML = outputHTML;
+    }
+
+    
+    
 
 }

@@ -45,11 +45,6 @@ public class DataSelectionViewController extends WizardView implements Initializ
         constractRemoteTree();
     }
 
-    @FXML
-    private void back(ActionEvent event
-    ) {
-        super.wizard.back(event);
-    }
 
     @FXML
     private void next(ActionEvent event
@@ -58,7 +53,7 @@ public class DataSelectionViewController extends WizardView implements Initializ
             Platform.runLater(()->loadingIndicator.setVisible(true));
             wizard.script.uploadInputFile(localBrowser.getSelectionModel().getSelectedItem().getValue().getAbsolutePath());
             while(wizard.script.th.isAlive()){}
-            super.wizard.script.getInputFile().bind(new SimpleStringProperty(SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "datasets/" + localBrowser.getSelectionModel().getSelectedItem().getValue().getName()));
+            super.wizard.script.getInputFile().bind(new SimpleStringProperty(localBrowser.getSelectionModel().getSelectedItem().getValue().getName()));
             super.wizard.next(event);
         } else if (!azizBrowser.getSelectionModel().isEmpty()) {
             super.wizard.script.getInputFile().bind(new SimpleStringProperty(azizBrowser.getSelectionModel().getSelectedItem().getValue().getFilename()));

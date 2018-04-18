@@ -36,7 +36,6 @@
          <bottom>
             <ButtonBar id="header" maxHeight="50.0" maxWidth="400.0" minHeight="50.0" minWidth="400.0" prefHeight="50.0" prefWidth="400.0" BorderPane.alignment="CENTER">
                <buttons>
-                  <Button fx:id="back" maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#back" text="Back" translateX="-160.0" />
                   <ProgressIndicator fx:id="loadingIndicator" maxHeight="35.0" minHeight="35.0" prefHeight="35.0" visible="false" />
                   <Button fx:id="next" maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#next" text="Next" translateX="-10.0" />
                </buttons>

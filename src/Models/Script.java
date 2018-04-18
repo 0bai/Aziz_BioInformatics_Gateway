@@ -137,15 +137,12 @@ public class Script implements SSHListener, Serializable {
                 + "#PBS -N " + name.getValue() + "\n";
     }
 
-    public void submit() throws InterruptedException {
-        if (th != null) {
-            th.join();
-        }
-        th = new Thread(new SSHTask(this, "/bin/echo " + scriptVal.getValue() + " > /home/" + SSHWrapper.username + "/ABG/jobs/" + name.getValue()));
+    public void submit(String script) throws InterruptedException {
+        th = new Thread(new SSHTask(this, "/bin/echo \"" + script + "\" > " + SSHWrapper.GetRemoteHomeFolder() + "/ABG/jobs/" + name.getValue()));
         th.setDaemon(true);
         th.start();
         th.join();
-        th = new Thread(new SSHTask(this, "/opt/pbs/default/bin/qsub /home/" + SSHWrapper.username + "/ABG/jobs/" + name.getValue()));
+        th = new Thread(new SSHTask(this, "/opt/pbs/default/bin/qsub " + SSHWrapper.GetRemoteHomeFolder() + "/ABG/jobs/" + name.getValue()));
         th.setDaemon(true);
         th.start();
         th.join();
@@ -156,11 +153,16 @@ public class Script implements SSHListener, Serializable {
         th = new Thread(new SSHTask(this, path, SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "datasets/" + temp[temp.length - 1], SSHTask.TaskType.UploadFile));
         th.setDaemon(true);
         th.start();
+        try {
+            th.join();
+        } catch (InterruptedException ex) {
+            Logger.getLogger(Script.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     @Override
     public void sshResponse(String strCommand, String strResponse) {
-        System.out.println(strResponse + "!");
+        System.out.println(strResponse + "!" + strCommand);
         if (strCommand.contains("qsub")) {
             jobID = strResponse.split("\\.")[0];
         }

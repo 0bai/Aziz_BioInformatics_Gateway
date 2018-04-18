@@ -8,7 +8,9 @@ package Controllers;
 import Models.WizardView;
 import java.net.URL;
 import java.util.ResourceBundle;
+import javafx.application.Platform;
 import static javafx.application.Platform.runLater;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -31,13 +33,13 @@ public class ScriptPreviewController extends WizardView implements Initializable
     }
 
     public void setText() {
-        runLater(() -> scriptPreviewField.setText(super.wizard.script.getScriptVal().getValue()));
+        Platform.runLater(() -> scriptPreviewField.setText(super.wizard.script.getScriptVal().getValue()));
     }
 
     @FXML
     private void submit(ActionEvent event) throws InterruptedException {
-        runLater(() -> loadingIndicator.setVisible(true));
-        super.wizard.script.submit();
+        Platform.runLater(() -> loadingIndicator.setVisible(true));
+        super.wizard.script.submit(scriptPreviewField.getText());
         wizard.stage.fireEvent(new WindowEvent(wizard.stage, WindowEvent.WINDOW_CLOSE_REQUEST));
     }
 

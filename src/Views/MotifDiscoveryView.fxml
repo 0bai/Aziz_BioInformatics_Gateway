@@ -269,7 +269,7 @@
                               </Spinner>
                               <Spinner fx:id="motifLengthMax" maxHeight="25.0" maxWidth="69.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="69.0">
                                  <valueFactory>
-                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="50" max="50" min="8" />
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="8" max="50" min="8" />
                                  </valueFactory>
                                  <HBox.margin>
                                     <Insets left="10.0" />

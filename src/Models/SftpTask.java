@@ -9,7 +9,7 @@ import javafx.concurrent.Task;
 
 public class SftpTask extends Task {
 
-    enum TaskType {
+    public enum TaskType {
         ListFile,
         Unknow
     }

@@ -7,13 +7,12 @@ import java.util.Vector;
 public class SSHWrapper {
     public static String username;
     public static String password;
-  //  public static String host = "localhost";
     public static String host = "10.113.16.7";
     public static int port;
 
     public static String GetLocalHomeFolder(){
-        
-        return "/Volumes/MacintoshHDD/OBAI";
+        System.out.println(System.getProperty("user.home"));
+        return System.getProperty("user.home");
     }
     
     public static String GetRemoteHomeFolder(){

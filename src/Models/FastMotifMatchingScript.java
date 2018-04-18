@@ -51,7 +51,7 @@ public class FastMotifMatchingScript extends Script {
     public void submit() {
         super.setScriptVal(new SimpleStringProperty(toString()));
         try {
-            super.submit();
+            super.submit(toString());
         } catch (InterruptedException ex) {
             Logger.getLogger(MotifDiscoveryScript.class.getName()).log(Level.SEVERE, null, ex);
         }

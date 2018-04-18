@@ -68,8 +68,8 @@ public class MotifMatchingScript extends Script {
 
     @Override
     public String toString() {
-        return (super.toString() + "cd /home/" + SSHWrapper.username + "/app/meme/bin\n"
-                + "./tomtom " + " -o" + (overWrite.getValue() ? "c" : "") + SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "jobs/" + outputName.getValue()
+        return (super.toString() + "module load mpi/openmpi-1.8.5/gcc-4.4.7 \n"+ "cd /home/" + SSHWrapper.username + "/app/meme/bin\n"
+                + "mpirun ./tomtom " + " -o " + (overWrite.getValue() ? "c" : "") + SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "jobs/" + outputName.getValue()
                 + (outputType.getValue() ? " -text" : "") + (alignedCols.getValue() ? " -incomplete-scores" : "") + " -min-overlap " + overlap.getValue() + (significance.getValueSafe().equalsIgnoreCase("E") ? " -evalue" : "") + " -thresh " + threshold.getValue() + " -dist " + (comparisonFunc.getValue() == 0 ? "pearson " : comparisonFunc.getValue() == 1 ? " ed " : " sandelin ")
                 + SSHWrapper.GetRemoteHomeFolder()+SSHWrapper.GetABGFolder() + "datasets/" + super.getInputFile().getValue() + " " + db.getValueSafe());
     }
@@ -77,7 +77,7 @@ public class MotifMatchingScript extends Script {
     public void submit() {
         super.setScriptVal(new SimpleStringProperty(toString()));
         try {
-            super.submit();
+            super.submit(toString());
         } catch (InterruptedException ex) {
             Logger.getLogger(MotifMatchingScript.class.getName()).log(Level.SEVERE, null, ex);
         }

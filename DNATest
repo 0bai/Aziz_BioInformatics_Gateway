@@ -1,0 +1,6 @@
+#PBS -l select=1:ncpus=1
+#PBS -q thin
+#PBS -N DNATest
+module load mpi/openmpi-1.8.5/gcc-4.4.7 
+cd /home/onajjar0001/app/meme/bin
+mpirun ./meme /home/onajjar0001/ABG/datasets/crp0.fasta  -o /home/onajjar0001/ABG/jobs/DNATestOut
