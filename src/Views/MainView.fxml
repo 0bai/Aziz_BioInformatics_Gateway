@@ -27,8 +27,8 @@
                         </Menu>
                         <Menu mnemonicParsing="false" text="Edit">
                             <items>
-                                <MenuItem mnemonicParsing="false" onAction="#addJob" text="Add" />
-                                <MenuItem mnemonicParsing="false" onAction="#removeJob" text="Delete" />
+                                <MenuItem fx:id="addMenuItem" mnemonicParsing="false" onAction="#addJob" text="Add" disable="true" />
+                                <MenuItem fx:id="removeMenuItem" mnemonicParsing="false" onAction="#removeJob" text="Delete" disable="true"/>
                             </items>
                         </Menu>
                     </menus>
@@ -89,8 +89,8 @@
                         <Insets />
                     </VBox.margin>
                     <children>
-                        <Button fx:id="Add" layoutX="25.0" layoutY="5.0" maxHeight="30.0" maxWidth="100.0" minHeight="30.0" minWidth="100.0" mnemonicParsing="false" onAction="#newJob" prefHeight="30.0" prefWidth="100.0" text="Add" />
-                        <Button fx:id="delete" layoutX="152.0" layoutY="5.0" maxHeight="30.0" maxWidth="100.0" minHeight="30.0" minWidth="100.0" mnemonicParsing="false" onAction="#deleteJob" prefHeight="30.0" prefWidth="100.0" text="Delete" textAlignment="CENTER">
+                        <Button fx:id="Add" disable="true" layoutX="25.0" layoutY="5.0" maxHeight="30.0" maxWidth="100.0" minHeight="30.0" minWidth="100.0" mnemonicParsing="false" onAction="#newJob" prefHeight="30.0" prefWidth="100.0" text="Add" />
+                        <Button fx:id="delete" disable="true" layoutX="152.0" layoutY="5.0" maxHeight="30.0" maxWidth="100.0" minHeight="30.0" minWidth="100.0" mnemonicParsing="false" onAction="#deleteJob" prefHeight="30.0" prefWidth="100.0" text="Delete" textAlignment="CENTER">
                             <opaqueInsets>
                                 <Insets />
                             </opaqueInsets>

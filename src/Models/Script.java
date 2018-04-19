@@ -18,7 +18,9 @@ public class Script implements SSHListener, Serializable {
     private SimpleStringProperty inputFile;
     protected SimpleStringProperty outputName;
     private SimpleStringProperty scriptVal;
-    public Thread th;
+    public Thread submitThread;
+    public Thread uploadThread;
+    public Thread qsubThread;
     public String jobID = "";
 
     public Script() {
@@ -114,14 +116,6 @@ public class Script implements SSHListener, Serializable {
         this.scriptVal = scriptVal;
     }
 
-    public Thread getTh() {
-        return th;
-    }
-
-    public void setTh(Thread th) {
-        this.th = th;
-    }
-
     public String getJobID() {
         return jobID;
     }
@@ -138,26 +132,41 @@ public class Script implements SSHListener, Serializable {
     }
 
     public void submit(String script) throws InterruptedException {
-        th = new Thread(new SSHTask(this, "/bin/echo \"" + script + "\" > " + SSHWrapper.GetRemoteHomeFolder() + "/ABG/jobs/" + name.getValue()));
-        th.setDaemon(true);
-        th.start();
-        th.join();
-        th = new Thread(new SSHTask(this, "/opt/pbs/default/bin/qsub " + SSHWrapper.GetRemoteHomeFolder() + "/ABG/jobs/" + name.getValue()));
-        th.setDaemon(true);
-        th.start();
-        th.join();
+        submitThread = new Thread(() -> {
+            if (uploadThread != null && uploadThread.isAlive()) {
+                try {
+                    uploadThread.join();
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(Script.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            submitThread = new Thread(new SSHTask(this, "/bin/echo \"" + script + "\" > " + SSHWrapper.GetRemoteHomeFolder() + "/ABG/jobs/" + name.getValue()));
+            submitThread.setDaemon(true);
+            submitThread.start();
+        });
+        submitThread.setDaemon(true);
+        submitThread.start();
+        qsubThread = new Thread(() -> {
+            try {
+                if (submitThread.isAlive()) {
+                    submitThread.join();
+                }
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Script.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            qsubThread = new Thread(new SSHTask(this, "/opt/pbs/default/bin/qsub " + SSHWrapper.GetRemoteHomeFolder() + "/ABG/jobs/" + name.getValue()));
+            qsubThread.setDaemon(true);
+            qsubThread.start();
+        });
+        qsubThread.setDaemon(true);
+        qsubThread.start();
     }
 
     public void uploadInputFile(String path) {
         String temp[] = path.split("/");
-        th = new Thread(new SSHTask(this, path, SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "datasets/" + temp[temp.length - 1], SSHTask.TaskType.UploadFile));
-        th.setDaemon(true);
-        th.start();
-        try {
-            th.join();
-        } catch (InterruptedException ex) {
-            Logger.getLogger(Script.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        uploadThread = new Thread(new SSHTask(this, path, SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "datasets/" + temp[temp.length - 1], SSHTask.TaskType.UploadFile));
+        uploadThread.setDaemon(true);
+        uploadThread.start();
     }
 
     @Override

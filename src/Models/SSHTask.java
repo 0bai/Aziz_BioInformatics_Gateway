@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class SSHTask extends Task{
+public class SSHTask extends Task {
 
     public enum TaskType{
         Command,
@@ -51,9 +51,7 @@ public class SSHTask extends Task{
             if (mType == TaskType.Command) {
                 List<String> lstCommads = new ArrayList<String>();
                 lstCommads.add(mCommand);
-                //String strResult = SshConnectionManager.executeCommands(lstCommads);
-                 strResult = SSHWrapper.executeRemoteCommand(mCommand);
-             
+                 strResult = SSHWrapper.executeRemoteCommand(mCommand);           
             } else if (mType == TaskType.UploadFile) {
                 boolean bResult = SSHWrapper.UploadFile(mSourceFile, mDestFile);
                  strResult =  Boolean.toString(bResult);

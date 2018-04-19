@@ -29,13 +29,14 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
-public class MainViewController implements Initializable, SSHListener {
+public class MainViewController extends Thread implements Initializable, SSHListener {
 
     private File ABG;
     private Stage stage;
@@ -48,7 +49,7 @@ public class MainViewController implements Initializable, SSHListener {
     public WizardController wizard = new WizardController();
     Thread th;
     @FXML
-    Button add;
+    Button Add;
     @FXML
     Button delete;
     @FXML
@@ -59,10 +60,15 @@ public class MainViewController implements Initializable, SSHListener {
     Pane pane;
     @FXML
     ContextMenu contextMenu;
+    @FXML
+    MenuItem addMenuItem;
+    @FXML
+    MenuItem deleteMenuItem;
     SimpleDoubleProperty sceneWidth;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        jobs = new Jobs();
         jobsTable.setRowFactory(tableView -> {
             TableRow<JobItem> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
@@ -92,28 +98,26 @@ public class MainViewController implements Initializable, SSHListener {
     }
 
     public void updatingDaemon() {
-        Thread th = new Thread(() -> {
+        th = new Thread(() -> {
             while (true) {
                 try {
-                    Thread.sleep(10000);
+                    Thread.sleep(5000);
+                    System.out.println("Updating");
                     if (!wizard.script.jobID.isEmpty() && flag) {
-                        System.out.println(wizard.script.getOutputName().getValue() + "!!!!!!!!!!!");
+                        wizard.script.qsubThread.join();
                         jobs.addJob(new JobItem(wizard.script.jobID, LocalDate.now().toString(), "Queued", wizard.script.getName().getValue(), wizard.script.getWallTime().getValue(), wizard.script.getNodes().getValue() + "", wizard.script.getThreads().getValue() + "", wizard.script.getOutputName().getValue()));
                         jobsTable.refresh();
                         wizard.script = new Script();
+                        flag = false;
+                        Platform.runLater(() -> progressIndicator.setVisible(false));
                     }
-                    flag = false;
                     jobs.saveData();
                 } catch (InterruptedException | IOException ex) {
                     Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
                 }
-                Platform.runLater(() -> progressIndicator.setVisible(true));
-
                 Platform.runLater(() -> {
                     jobsTable.refresh();
-                    progressIndicator.setVisible(false);
                 });
-
             }
         });
         th.setDaemon(true);
@@ -131,9 +135,6 @@ public class MainViewController implements Initializable, SSHListener {
             throw new RuntimeException(ex);
         }
         progressIndicator.layoutXProperty().bind(scene.widthProperty().subtract(40));
-        loadContent();
-        jobsTable.setItems(jobs.getJobs());
-
     }
 
     public void launch(Stage stage) {
@@ -141,52 +142,86 @@ public class MainViewController implements Initializable, SSHListener {
         stage.setScene(scene);
         stage.setResizable(true);
         stage.show();
-
+        loadContentThread();
     }
 
     private void showOutput(JobItem job) throws IOException, InterruptedException {
-        Platform.runLater(() -> progressIndicator.setVisible(true));
-        File textOut = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/" + "meme.txt");
-        File htmlOut = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/" + "meme.html");
-        File error = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/" + job.getName() + ".e" + job.getId());
-        if (!textOut.exists() && !htmlOut.exists() && !error.exists()) {
-            getOutputDirectory(job);
-        }
-        if (htmlOut.exists()) {
-            setHtmlURI(htmlOut, job);
-            showHtmlOutput(job);
-        }
-        if (textOut.exists()) {
-            setTextURI(textOut, job);
-            showTextOutput(job);
-        }
-        if (!error.exists()) {
-            getErrorFile(job, error);
-            showTextOutput(job);
-        }
-        Platform.runLater(() -> progressIndicator.setVisible(false));
+        Thread th = new Thread(() -> {
+            Platform.runLater(() -> progressIndicator.setVisible(true));
+            File textOut = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/" + "meme.txt");
+            File htmlOut = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/" + "meme.html");
+            File error = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/ConsoleOutput.txt");
+            if (!textOut.exists() && !htmlOut.exists() && !error.exists()) {
+                try {
+                    getOutputDirectory(job);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            try {
+                thread.join();
+            } catch (InterruptedException ex) {
+                Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            if (htmlOut.exists()) {
+                setHtmlURI(htmlOut, job);
+                showHtmlOutput(job);
+            }
+            if (textOut.exists()) {
+                setTextURI(textOut, job);
+                showTextOutput(job);
+            }
+            if (!error.exists()) {
+                try {
+                    getErrorFile(job, error);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                try {
+                    thread.join();
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                showTextOutput(job);
+            }
+            Platform.runLater(() -> progressIndicator.setVisible(false));
+        });
+        th.setDaemon(true);
+        th.start();
     }
 
     private void getOutputDirectory(JobItem job) throws InterruptedException {
         File output = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/");
         output.mkdirs();
-        th = new Thread(new SftpTask(this, SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "jobs/" + job.getOutputName(), SftpTask.TaskType.ListFile));
+        final Thread th = new Thread(new SftpTask(this, SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "jobs/" + job.getOutputName(), SftpTask.TaskType.ListFile));
         th.setDaemon(true);
         th.start();
-        th.join();
-        for (int i = 2; i < list.size(); i++) {
-            th = new Thread(new SSHTask(this, SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "jobs/" + job.getOutputName() + "/" + list.get(i).getFilename(), output.getAbsolutePath() + "/" + list.get(i).getFilename(), SSHTask.TaskType.DownloadFile));
-            th.setDaemon(true);
-            th.start();
-            th.join();
-        }
+        thread = new Thread(() -> {
+            try {
+                th.join();
+            } catch (InterruptedException ex) {
+                Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            for (int i = 2; i < list.size(); i++) {
+                Thread tmp = new Thread(new SSHTask(this, SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "jobs/" + job.getOutputName() + "/" + list.get(i).getFilename(), output.getAbsolutePath() + "/" + list.get(i).getFilename(), SSHTask.TaskType.DownloadFile));
+                tmp.setDaemon(true);
+                tmp.start();
+                try {
+                    tmp.join();
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        });
+        thread.setDaemon(true);
+        thread.start();
     }
 
     private void getErrorFile(JobItem job, File error) throws InterruptedException {
-        th = new Thread(new SSHTask(this, SSHWrapper.GetRemoteHomeFolder() + "/*.e" + job.getId(), error.getAbsolutePath(), SSHTask.TaskType.DownloadFile));
-        th.setDaemon(true);
-        th.start();
-        th.join();
+        thread = new Thread(new SSHTask(this, SSHWrapper.GetRemoteHomeFolder() + "/*.e" + job.getId(), error.getAbsolutePath(), SSHTask.TaskType.DownloadFile));
+        thread.setDaemon(true);
+        thread.start();
+        thread.join();
         job.setOutputText(error.toURI());
     }
 
@@ -214,29 +249,44 @@ public class MainViewController implements Initializable, SSHListener {
         }
     }
 
-    private void loadContent() throws IOException, FileNotFoundException, ClassNotFoundException, BackingStoreException, InterruptedException {
+    private void loadContentThread() {
         ABG = new File(SSHWrapper.GetLocalHomeFolder() + "/ABG/");
         if (!ABG.exists()) {
-            System.out.println(ABG.getAbsolutePath());
             ABG.mkdir();
         }
         progressIndicator.setVisible(true);
-        thread = new Thread(new SSHTask(this, "/usr/bin/file /home/" + SSHWrapper.username + "/ABG/config/Data.SER"));
+        thread = new Thread(() -> {
+            try {
+                thread = new Thread(new SSHTask(this, "/usr/bin/file /home/" + SSHWrapper.username + "/ABG/config/Data.SER"));
+                thread.setDaemon(true);
+                thread.start();
+                thread.join();
+                if (flag) {
+                    thread = new Thread(new SSHTask(this, "/bin/mkdir -p  /home/" + SSHWrapper.username + "/ABG/{config,datasets,jobs}"));
+                    thread.setDaemon(true);
+                    thread.start();
+                } else {
+                    try {
+                        jobs.init();
+                    } catch (IOException | ClassNotFoundException | BackingStoreException ex) {
+                        Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    jobs.th.join();
+                }
+            } catch (InterruptedException ex) {
+                Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            jobsTable.setItems(jobs.getJobs());
+            updatingDaemon();
+            flag = false;
+            Add.setDisable(false);
+            delete.setDisable(false);
+            addMenuItem.setDisable(false);
+            deleteMenuItem.setDisable(false);
+            Platform.runLater(()-> progressIndicator.setVisible(true));
+        });
         thread.setDaemon(true);
         thread.start();
-        thread.join();
-        if (flag) {
-            thread = new Thread(new SSHTask(this, "/bin/mkdir -p  /home/" + SSHWrapper.username + "/ABG/{config,datasets,jobs}"));
-            thread.setDaemon(true);
-            thread.start();
-            jobs = new Jobs();
-        } else {
-            jobs = new Jobs();
-            jobs.init();
-            jobs.th.join();
-        }
-        updatingDaemon();
-        flag = false;
 
     }
 
@@ -249,10 +299,18 @@ public class MainViewController implements Initializable, SSHListener {
     }
 
     public void newJob() {
+        try {
+            if (wizard.script.qsubThread != null && wizard.script.qsubThread.isAlive()) {
+                wizard.script.qsubThread.join();
+            }
+        } catch (InterruptedException ex) {
+            Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+        }
         Platform.runLater(() -> progressIndicator.setVisible(true));
         wizard = new WizardController();
         wizard.launch(new Stage());
         wizard.stage.setOnCloseRequest(e -> {
+             Platform.runLater(() -> progressIndicator.setVisible(false));
             flag = true;
         });
     }
@@ -294,21 +352,38 @@ public class MainViewController implements Initializable, SSHListener {
 
     @FXML
     private void showScript(ActionEvent event) throws InterruptedException, IOException {
-        Platform.runLater(() -> progressIndicator.setVisible(true));
-        if (!jobsTable.getSelectionModel().isEmpty()) {
-            JobItem job = jobsTable.getSelectionModel().getSelectedItem();
-            File script = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/script");
-            if (!script.exists()) {
-                script.mkdirs();
-                getScriptFile(job, script);
-            }
+        Thread th = new Thread(() -> {
+            Platform.runLater(() -> progressIndicator.setVisible(true));
+            if (!jobsTable.getSelectionModel().isEmpty()) {
+                JobItem job = jobsTable.getSelectionModel().getSelectedItem();
+                File script = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/script");
+                if (!script.exists()) {
+                    script.mkdirs();
+                    try {
+                        getScriptFile(job, script);
+                        thread.join();
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
 
-            if (script.exists()) {
-                setScriptURI(job, script);
-                showScript(job);
+                if (script.exists()) {
+                    try {
+                        setScriptURI(job, script);
+                    } catch (IOException ex) {
+                        Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    try {
+                        showScript(job);
+                    } catch (IOException ex) {
+                        Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
             }
-        }
-        Platform.runLater(() -> progressIndicator.setVisible(false));
+            Platform.runLater(() -> progressIndicator.setVisible(false));
+        });
+        th.setDaemon(true);
+        th.start();
     }
 
     private void showScript(JobItem job) throws IOException {
@@ -321,10 +396,9 @@ public class MainViewController implements Initializable, SSHListener {
     }
 
     private void getScriptFile(JobItem job, File script) throws InterruptedException {
-        th = new Thread(new SSHTask(this, SSHWrapper.GetRemoteHomeFolder() + "/" + SSHWrapper.GetABGFolder() + "jobs/" + job.getName(), script.getAbsolutePath() + "/" + job.getName(), SSHTask.TaskType.DownloadFile));
-        th.setDaemon(true);
-        th.start();
-        th.join();
+        thread = new Thread(new SSHTask(this, SSHWrapper.GetRemoteHomeFolder() + "/" + SSHWrapper.GetABGFolder() + "jobs/" + job.getName(), script.getAbsolutePath() + "/" + job.getName(), SSHTask.TaskType.DownloadFile));
+        thread.setDaemon(true);
+        thread.start();
     }
 
     public void close() {

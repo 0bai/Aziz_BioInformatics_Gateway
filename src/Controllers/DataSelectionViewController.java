@@ -52,7 +52,6 @@ public class DataSelectionViewController extends WizardView implements Initializ
         if (!(localBrowser.getSelectionModel().getSelectedItem()==null)) {
             Platform.runLater(()->loadingIndicator.setVisible(true));
             wizard.script.uploadInputFile(localBrowser.getSelectionModel().getSelectedItem().getValue().getAbsolutePath());
-            while(wizard.script.th.isAlive()){}
             super.wizard.script.getInputFile().bind(new SimpleStringProperty(localBrowser.getSelectionModel().getSelectedItem().getValue().getName()));
             super.wizard.next(event);
         } else if (!azizBrowser.getSelectionModel().isEmpty()) {
