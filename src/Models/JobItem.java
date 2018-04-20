@@ -18,8 +18,9 @@ public class JobItem implements Serializable {
     public URI script;
     public URI outputText;
     public URI outputHTML;
+    public char type;
 
-    public JobItem(String Id, String DateCreated, String Status, String name, String wallTime, String cpusNum, String nodesNum, String outputName) {
+    public JobItem(String Id, String DateCreated, String Status, String name, String wallTime, String cpusNum, String nodesNum, String outputName, char type) {
         this.Id = Id;
         this.DateCreated = DateCreated;
         this.Status = Status;
@@ -29,6 +30,7 @@ public class JobItem implements Serializable {
         this.Nodes = nodesNum;
         this.CpuTime = "00:00:00";
         this.outputName = outputName;
+        this.type = type;
     }
 
     public JobItem(String strStatus) {
@@ -135,6 +137,14 @@ public class JobItem implements Serializable {
 
     public void setOutputHTML(URI outputHTML) {
         this.outputHTML = outputHTML;
+    }
+
+    public char getType() {
+        return type;
+    }
+
+    public void setType(char type) {
+        this.type = type;
     }
 
     

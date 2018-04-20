@@ -92,7 +92,7 @@ public class MotifDiscoveryViewController extends WizardView implements Initiali
 
     @FXML
     private void next(ActionEvent event) {
-
+        super.wizard.script.setType('M');
         ((MotifDiscoveryScript) super.wizard.script).getOutputName().bindBidirectional(outputName.textProperty());
         ((MotifDiscoveryScript) super.wizard.script).getOverWrite().bindBidirectional(overWrite.selectedProperty());
         ((MotifDiscoveryScript) super.wizard.script).getOutputType().bindBidirectional(textOut.selectedProperty());

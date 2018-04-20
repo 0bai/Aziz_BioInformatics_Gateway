@@ -3,7 +3,6 @@ package Controllers;
 import Models.Database;
 import Models.MotifMatchingScript;
 import Models.SSHListener;
-import Models.SSHTask;
 import Models.SSHWrapper;
 import Models.WizardView;
 import com.jcraft.jsch.ChannelSftp;
@@ -120,7 +119,7 @@ public class MotifMatchingViewController extends WizardView implements Initializ
 
 
     private synchronized void showDB() throws FileNotFoundException {
-        Scanner in = new Scanner(new File("motif_db.csv"));
+        Scanner in = new Scanner(new File(SSHWrapper.GetLocalHomeFolder() + "/ABG/motif_db.csv"));
         for (int i = 0; i < 10; i++) {
             in.nextLine();
         }
@@ -147,6 +146,7 @@ public class MotifMatchingViewController extends WizardView implements Initializ
 
     @FXML
     private void next(ActionEvent event) {
+         super.wizard.script.setType('T');
         ((MotifMatchingScript) super.wizard.script).getOutputName().bindBidirectional(outputName.textProperty());
         ((MotifMatchingScript) super.wizard.script).getOverWrite().bindBidirectional(overWrite.selectedProperty());
         ((MotifMatchingScript) super.wizard.script).getOutputType().bindBidirectional(textOut.selectedProperty());

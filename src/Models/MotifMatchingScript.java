@@ -67,6 +67,13 @@ public class MotifMatchingScript extends Script {
     }
 
     @Override
+    public void setType(char type) {
+        super.type = 'T';
+    }
+    
+    
+
+    @Override
     public String toString() {
         return (super.toString() + "module load mpi/openmpi-1.8.5/gcc-4.4.7 \n"+ "cd /home/" + SSHWrapper.username + "/app/meme/bin\n"
                 + "mpirun ./tomtom " + " -o " + (overWrite.getValue() ? "c" : "") + SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "jobs/" + outputName.getValue()

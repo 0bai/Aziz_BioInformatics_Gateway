@@ -45,7 +45,7 @@ public class FastMotifMatchingScript extends Script {
     @Override
     public String toString() {
         return (super.toString() + "cd /home/" + SSHWrapper.username + "/app/meme/bin\n"
-                + "./fastMotif " + SSHWrapper.GetRemoteHomeFolder()+SSHWrapper.GetABGFolder() + "datasets/" + super.getInputFile().getValue() + " "+ motifLength.getValue()+" "+motifNumber.getValue()+" "+mutations.getValue()+" > "+ SSHWrapper.GetRemoteHomeFolder()+SSHWrapper.GetABGFolder()+"jobs/"+outputName.getValue());
+                + "./fastMotif " + SSHWrapper.GetRemoteHomeFolder()+SSHWrapper.GetABGFolder() + "datasets/" + super.getInputFile().getValue() + " "+ motifLength.getValue()+" "+motifNumber.getValue()+" "+mutations.getValue()+" > "+ SSHWrapper.GetRemoteHomeFolder()+SSHWrapper.GetABGFolder()+"jobs/"+outputName.getValue()+"/meme.txt");
     }
 
     public void submit() {

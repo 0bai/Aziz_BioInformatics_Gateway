@@ -63,7 +63,7 @@ public class MainViewController extends Thread implements Initializable, SSHList
     @FXML
     MenuItem addMenuItem;
     @FXML
-    MenuItem deleteMenuItem;
+    MenuItem removeMenuItem;
     SimpleDoubleProperty sceneWidth;
 
     @Override
@@ -87,25 +87,26 @@ public class MainViewController extends Thread implements Initializable, SSHList
             return row;
 
         });
-        getDB();
     }
 
     private void getDB() {
-        File tmp = new File("motif_db.csv");
-        th = new Thread(new SSHTask(this, SSHWrapper.GetRemoteHomeFolder() + "/app/meme/db/motif_databases/motif_db.csv", tmp.getAbsolutePath(), SSHTask.TaskType.DownloadFile));
-        th.setDaemon(true);
-        th.start();
+        File tmp = new File(ABG.getAbsolutePath() + "/" + "motif_db.csv");
+        if (!tmp.exists()) {
+            thread = new Thread(new SSHTask(this, SSHWrapper.GetRemoteHomeFolder() + "/app/meme/db/motif_databases/motif_db.csv", tmp.getAbsolutePath(), SSHTask.TaskType.DownloadFile));
+            thread.setDaemon(true);
+            thread.start();
+        }
     }
 
     public void updatingDaemon() {
         th = new Thread(() -> {
             while (true) {
                 try {
-                    Thread.sleep(5000);
+                    Thread.sleep(15000);
                     System.out.println("Updating");
                     if (!wizard.script.jobID.isEmpty() && flag) {
                         wizard.script.qsubThread.join();
-                        jobs.addJob(new JobItem(wizard.script.jobID, LocalDate.now().toString(), "Queued", wizard.script.getName().getValue(), wizard.script.getWallTime().getValue(), wizard.script.getNodes().getValue() + "", wizard.script.getThreads().getValue() + "", wizard.script.getOutputName().getValue()));
+                        jobs.addJob(new JobItem(wizard.script.jobID, LocalDate.now().toString(), "Queued", wizard.script.getName().getValue(), wizard.script.getWallTime().getValue(), wizard.script.getNodes().getValue() + "", wizard.script.getThreads().getValue() + "", wizard.script.getOutputName().getValue(), wizard.script.getType()));
                         jobsTable.refresh();
                         wizard.script = new Script();
                         flag = false;
@@ -143,13 +144,22 @@ public class MainViewController extends Thread implements Initializable, SSHList
         stage.setResizable(true);
         stage.show();
         loadContentThread();
+        getDB();
     }
 
     private void showOutput(JobItem job) throws IOException, InterruptedException {
         Thread th = new Thread(() -> {
             Platform.runLater(() -> progressIndicator.setVisible(true));
-            File textOut = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/" + "meme.txt");
-            File htmlOut = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/" + "meme.html");
+            File textOut;
+            File htmlOut;
+            System.out.println(job.getType());
+            if (job.getType() == 'T') {
+                textOut = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/" + "tomtom.txt");
+                htmlOut = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/" + "tomtom.html");
+            } else {
+                textOut = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/" + "meme.txt");
+                htmlOut = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/" + "meme.html");
+            }
             File error = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/ConsoleOutput.txt");
             if (!textOut.exists() && !htmlOut.exists() && !error.exists()) {
                 try {
@@ -207,7 +217,9 @@ public class MainViewController extends Thread implements Initializable, SSHList
                 tmp.setDaemon(true);
                 tmp.start();
                 try {
-                    tmp.join();
+                    if (!tmp.isAlive()) {
+                        tmp.join();
+                    }
                 } catch (InterruptedException ex) {
                     Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -282,8 +294,8 @@ public class MainViewController extends Thread implements Initializable, SSHList
             Add.setDisable(false);
             delete.setDisable(false);
             addMenuItem.setDisable(false);
-            deleteMenuItem.setDisable(false);
-            Platform.runLater(()-> progressIndicator.setVisible(true));
+            removeMenuItem.setDisable(false);
+            Platform.runLater(() -> progressIndicator.setVisible(true));
         });
         thread.setDaemon(true);
         thread.start();
@@ -310,7 +322,7 @@ public class MainViewController extends Thread implements Initializable, SSHList
         wizard = new WizardController();
         wizard.launch(new Stage());
         wizard.stage.setOnCloseRequest(e -> {
-             Platform.runLater(() -> progressIndicator.setVisible(false));
+            Platform.runLater(() -> progressIndicator.setVisible(false));
             flag = true;
         });
     }
@@ -322,7 +334,7 @@ public class MainViewController extends Thread implements Initializable, SSHList
             th.start();
 
         }
-        new Thread(new SSHTask(this, "/bin/rm " + SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "jobs/" + jobsTable.getSelectionModel().getSelectedItem().getOutputName())).start();
+        new Thread(new SSHTask(this, "/bin/rm -rf" + SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "jobs/" + jobsTable.getSelectionModel().getSelectedItem().getOutputName())).start();
         new Thread(new SSHTask(this, "/bin/rm " + SSHWrapper.GetRemoteHomeFolder() + "/" + jobsTable.getSelectionModel().getSelectedItem().getName() + ".*" + jobsTable.getSelectionModel().getSelectedItem().getId())).start();
         jobs.removeJob(jobsTable.getSelectionModel().getSelectedItem());
     }

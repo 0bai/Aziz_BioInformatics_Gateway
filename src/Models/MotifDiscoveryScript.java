@@ -116,14 +116,20 @@ public class MotifDiscoveryScript extends Script {
 
     @Override
     public String toString() {
-        return (super.toString() + "module load mpi/openmpi-1.8.5/gcc-4.4.7 \n"+"cd /home/" + SSHWrapper.username + "/app/meme/bin\n"
-                + "mpirun ./meme "  + SSHWrapper.GetRemoteHomeFolder()+SSHWrapper.GetABGFolder()+"datasets/"+super.getInputFile().getValue() + " " + " -o" + (overWrite.getValue() ? "c" : " ") + SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "jobs/" + outputName.getValue()+ " -" + inputType.getValue() 
+        return (super.toString() + "module load mpi/openmpi-1.8.5/gcc-4.4.7 \n" + "cd /home/" + SSHWrapper.username + "/app/meme/bin\n"
+                + "mpirun ./meme " + SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "datasets/" + super.getInputFile().getValue() + " " + " -o" + (overWrite.getValue() ? "c" : " ") + SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "jobs/" + outputName.getValue() + " -" + inputType.getValue()
                 + (outputType.getValue() ? " -text " : "") + (ocurrence.getValue().isEmpty() ? "" : " -mod " + ocurrence.getValue()) + " -nmotifs " + motifNumber.getValue() + (exactMotifSites.getValue() ? " -nsites " + maxMotifSites.getValue() : "")
                 + " -minsites " + minMotifSites.getValue() + " -maxsites " + maxMotifSites.getValue() + " -wnsites " + bias.getValue() + " -w " + motifLength.getValue()
                 + " -minw " + minMotifLength.getValue() + " -maxw " + maxMotifLength.getValue() + (trimming.getValue() ? " -nomatrim " : " ") + " -wg " + gapOpeningCost.getValue() + " -ws " + gapExtensionCost.getValue() + (noEndGaps.getValue() ? " -noendgaps " : ""));
     }
 
+    @Override
+    public void setType(char type) {
+        super.setType(type);
+    }
+
     public void submit() {
+        super.setType('M');
         super.setScriptVal(new SimpleStringProperty(toString()));
         try {
             super.submit(toString());

@@ -22,6 +22,7 @@ public class Script implements SSHListener, Serializable {
     public Thread uploadThread;
     public Thread qsubThread;
     public String jobID = "";
+    public char type;
 
     public Script() {
         name = new SimpleStringProperty();
@@ -191,5 +192,17 @@ public class Script implements SSHListener, Serializable {
     public void GotFilesList(String strDirecory, Vector<ChannelSftp.LsEntry> lstItems) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
+
+    public char getType() {
+        return type;
+    }
+
+    public void setType(char type) {
+        this.type = type;
+    }
+
+
+    
+    
 
 }
