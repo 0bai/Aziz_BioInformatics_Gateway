@@ -21,11 +21,9 @@ public class FastMotifMatchingViewController extends WizardView implements Initi
     @FXML
     private TextField outputName;
     @FXML
-    private Spinner<Integer> motifNumber;
+    private Spinner<Integer> sequenceNumber;
     @FXML
-    private Spinner<Integer> motifLength;
-    @FXML
-    private Spinner<Integer> mutations;
+    private Spinner<Integer> sequenceLength;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -39,9 +37,8 @@ public class FastMotifMatchingViewController extends WizardView implements Initi
     @FXML
     private void next(ActionEvent event) {
         ((FastMotifMatchingScript) super.wizard.script).getOutputName().bindBidirectional(outputName.textProperty());
-        ((FastMotifMatchingScript) super.wizard.script).getMotifLength().bind(motifLength.valueProperty());
-        ((FastMotifMatchingScript) super.wizard.script).getMotifNumber().bind(motifNumber.valueProperty());
-        ((FastMotifMatchingScript) super.wizard.script).getMutations().bind(mutations.valueProperty());
+        ((FastMotifMatchingScript) super.wizard.script).getSequenceLength().bind(sequenceLength.valueProperty());
+        ((FastMotifMatchingScript) super.wizard.script).getSequenceNumber().bind(sequenceNumber.valueProperty());
         super.wizard.script.setScriptVal(new SimpleStringProperty(((FastMotifMatchingScript) super.wizard.script).toString()));
         if (Validate()) {
             super.wizard.next(event);

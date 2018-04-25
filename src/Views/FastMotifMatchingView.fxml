@@ -69,19 +69,19 @@
                               <Insets left="10.0" top="5.0" />
                            </VBox.margin>
                         </Label>
-                        <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0">
+                        <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="370.0" minHeight="35.0" minWidth="370.0" prefHeight="35.0" prefWidth="370.0">
                            <children>
-                              <Label text="Number of Motifs">
+                              <Label prefHeight="19.0" prefWidth="178.0" text="Sequence Length">
                                  <font>
                                     <Font size="15.0" />
                                  </font>
                               </Label>
-                              <Spinner fx:id="motifNumber" maxHeight="25.0" maxWidth="60.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="60.0">
+                              <Spinner fx:id="sequenceLength" maxHeight="25.0" maxWidth="60.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="60.0">
                                  <valueFactory>
-                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="1" max="1000" min="1" />
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="105" max="1000" min="8" />
                                  </valueFactory>
                                  <HBox.margin>
-                                    <Insets left="170.0" />
+                                    <Insets left="115.0" />
                                  </HBox.margin>
                               </Spinner>
                            </children>
@@ -91,34 +91,14 @@
                         </HBox>
                         <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="370.0" minHeight="35.0" minWidth="370.0" prefHeight="35.0" prefWidth="370.0">
                            <children>
-                              <Label prefHeight="19.0" prefWidth="105.0" text="Length">
+                              <Label prefHeight="19.0" prefWidth="300.0" text="Number of Sequences">
                                  <font>
                                     <Font size="15.0" />
                                  </font>
                               </Label>
-                              <Spinner fx:id="motifLength" maxHeight="25.0" maxWidth="60.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="60.0">
+                              <Spinner fx:id="sequenceNumber" maxHeight="25.0" maxWidth="60.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="60.0">
                                  <valueFactory>
-                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="16" max="1000" min="8" />
-                                 </valueFactory>
-                                 <HBox.margin>
-                                    <Insets left="190.0" />
-                                 </HBox.margin>
-                              </Spinner>
-                           </children>
-                           <VBox.margin>
-                              <Insets left="10.0" top="10.0" />
-                           </VBox.margin>
-                        </HBox>
-                        <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="370.0" minHeight="35.0" minWidth="370.0" prefHeight="35.0" prefWidth="370.0">
-                           <children>
-                              <Label prefHeight="19.0" prefWidth="300.0" text="Allowed Mutations">
-                                 <font>
-                                    <Font size="15.0" />
-                                 </font>
-                              </Label>
-                              <Spinner fx:id="mutations" maxHeight="25.0" maxWidth="60.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="60.0">
-                                 <valueFactory>
-                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="4" max="1000" min="1" />
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="18" max="1000" min="1" />
                                  </valueFactory>
                                  <HBox.margin>
                                     <Insets left="-5.0" />

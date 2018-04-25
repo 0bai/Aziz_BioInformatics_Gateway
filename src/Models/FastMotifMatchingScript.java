@@ -7,45 +7,36 @@ import javafx.beans.property.SimpleStringProperty;
 
 public class FastMotifMatchingScript extends Script {
 
-    private SimpleIntegerProperty motifNumber;
-    private SimpleIntegerProperty motifLength;
-    private SimpleIntegerProperty mutations;
+    private SimpleIntegerProperty sequenceLength;
+    private SimpleIntegerProperty sequenceNumber;
 
     public FastMotifMatchingScript() {
-        motifLength = new SimpleIntegerProperty();
-        motifNumber = new SimpleIntegerProperty();
-        mutations = new SimpleIntegerProperty();
+        sequenceLength = new SimpleIntegerProperty();
+        sequenceNumber = new SimpleIntegerProperty();
         outputName = new SimpleStringProperty();
     }
 
-    public SimpleIntegerProperty getMotifNumber() {
-        return motifNumber;
+    public SimpleIntegerProperty getSequenceLength() {
+        return sequenceLength;
     }
 
-    public void setMotifNumber(SimpleIntegerProperty motifNumber) {
-        this.motifNumber = motifNumber;
+    public void setSequenceLength(SimpleIntegerProperty sequenceLength) {
+        this.sequenceLength = sequenceLength;
     }
 
-    public SimpleIntegerProperty getMotifLength() {
-        return motifLength;
+    public SimpleIntegerProperty getSequenceNumber() {
+        return sequenceNumber;
     }
 
-    public void setMotifLength(SimpleIntegerProperty motifLength) {
-        this.motifLength = motifLength;
-    }
-
-    public SimpleIntegerProperty getMutations() {
-        return mutations;
-    }
-
-    public void setMutations(SimpleIntegerProperty mutations) {
-        this.mutations = mutations;
+    public void setSequenceNumber(SimpleIntegerProperty sequenceNumber) {
+        this.sequenceNumber = sequenceNumber;
     }
 
     @Override
     public String toString() {
-        return (super.toString() + "cd /home/" + SSHWrapper.username + "/app/meme/bin\n"
-                + "./fastMotif " + SSHWrapper.GetRemoteHomeFolder()+SSHWrapper.GetABGFolder() + "datasets/" + super.getInputFile().getValue() + " "+ motifLength.getValue()+" "+motifNumber.getValue()+" "+mutations.getValue()+" > "+ SSHWrapper.GetRemoteHomeFolder()+SSHWrapper.GetABGFolder()+"jobs/"+outputName.getValue()+"/meme.txt");
+        return (super.toString() + "module load composer_xe/2015.2.164 impi/5.0.3.048\n"
+                + "cd " + SSHWrapper.GetRemoteHomeFolder() + "/Motif-Obai\n"
+                + "./main s " + SSHWrapper.GetRemoteHomeFolder() + "/" + outputName.getValue() + " " + sequenceNumber.getValue() + " " + sequenceLength.getValue());
     }
 
     public void submit() {
