@@ -1,2 +1,0 @@
-/var/spool/PBS/mom_priv/jobs/825172.khead1.SC: line 4: syntax error near unexpected token `100000'
-/var/spool/PBS/mom_priv/jobs/825172.khead1.SC: line 4: `sleep(100000)'

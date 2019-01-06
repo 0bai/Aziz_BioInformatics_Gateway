@@ -1,0 +1,4384 @@
+
+import Controllers.SignInViewController;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.prefs.BackingStoreException;
+import javafx.application.Application;
+import javafx.stage.Stage;
+
+public class Main extends Application {
+
+    @Override
+    public void start(Stage primaryStage) throws IOException, FileNotFoundException, ClassNotFoundException, BackingStoreException {
+        primaryStage.setTitle("Aziz Bioinformatics Gateway");
+        new SignInViewController().launch(primaryStage);
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+
+}
+package Controllers;
+
+import Models.AlertBox;
+import Models.LocalTree;
+import Models.RemoteTree;
+import Models.SSHTask;
+import Models.SSHWrapper;
+import Models.WizardView;
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.SftpException;
+import java.io.File;
+import java.net.URL;
+import java.util.ResourceBundle;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
+import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.TreeCell;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
+import javafx.util.Callback;
+
+public class DataSelectionViewController extends WizardView implements Initializable {
+
+    @FXML
+    private Button back;
+    @FXML
+    private Button next;
+    @FXML
+    private TreeView<ChannelSftp.LsEntry> azizBrowser;
+    @FXML
+    private TreeView<File> localBrowser;
+    @FXML
+    private ProgressIndicator loadingIndicator;
+
+    @Override
+    public void initialize(URL url, ResourceBundle rb) {
+        constractLocalTree();
+        constractRemoteTree();
+    }
+
+
+    @FXML
+    private void next(ActionEvent event
+    ) {
+        if (!(localBrowser.getSelectionModel().getSelectedItem()==null)) {
+            Platform.runLater(()->loadingIndicator.setVisible(true));
+            wizard.script.uploadInputFile(localBrowser.getSelectionModel().getSelectedItem().getValue().getAbsolutePath());
+            super.wizard.script.getInputFile().bind(new SimpleStringProperty(localBrowser.getSelectionModel().getSelectedItem().getValue().getName()));
+            super.wizard.next(event);
+        } else if (!azizBrowser.getSelectionModel().isEmpty()) {
+            super.wizard.script.getInputFile().bind(new SimpleStringProperty(azizBrowser.getSelectionModel().getSelectedItem().getValue().getFilename()));
+            super.wizard.next(event);
+        } else {
+            AlertBox.display("Input Error!", "Please select an input file");
+        }
+    }
+
+    public void constractLocalTree() {
+        TreeItem localRoot = new TreeItem<File>();
+        LocalTree.constructTree(SSHWrapper.GetLocalHomeFolder(), localRoot);
+        localBrowser.autosize();
+        localBrowser.setRoot(localRoot);
+        localBrowser.setShowRoot(false);
+        localBrowser.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (observable.getValue().getChildren().contains(null) && newValue.getValue().isDirectory()) {
+                newValue.getChildren().remove(null);
+                LocalTree.constructTree(newValue.getValue().getAbsolutePath(), newValue);
+            }
+        });
+        localBrowser.setCellFactory(new Callback<TreeView<File>, TreeCell<File>>() {
+            @Override
+            public TreeCell<File> call(TreeView<File> tv) {
+                return new TreeCell<File>() {
+
+                    @Override
+                    protected void updateItem(File item, boolean empty) {
+                        super.updateItem(item, empty);
+
+                        setText((empty || item == null) ? "" : item.getName());
+                    }
+                };
+            }
+        });
+
+    }
+
+    public void constractRemoteTree() {
+        TreeItem root = new TreeItem<ChannelSftp.LsEntry>();
+        try {
+            new RemoteTree().constructTree(SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "/datasets", root);
+        } catch (SftpException | JSchException ex) {
+            Logger.getLogger(DataSelectionViewController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        azizBrowser.setRoot(root);
+        azizBrowser.autosize();
+        azizBrowser.setRoot(root);
+        azizBrowser.setShowRoot(false);
+        azizBrowser.setCellFactory(new Callback<TreeView<ChannelSftp.LsEntry>, TreeCell<ChannelSftp.LsEntry>>() {
+            @Override
+            public TreeCell<ChannelSftp.LsEntry> call(TreeView<ChannelSftp.LsEntry> tv) {
+                return new TreeCell<ChannelSftp.LsEntry>() {
+
+                    @Override
+                    protected void updateItem(ChannelSftp.LsEntry item, boolean empty) {
+                        super.updateItem(item, empty);
+
+                        setText((empty || item == null) ? "" : item.getFilename());
+                    }
+                };
+            }
+        });
+    }
+
+}
+package Controllers;
+
+import Models.FastMotifMatchingScript;
+import Models.WizardView;
+import java.net.URL;
+import java.util.ResourceBundle;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.TextField;
+
+public class FastMotifMatchingViewController extends WizardView implements Initializable {
+
+    @FXML
+    private Button back;
+    @FXML
+    private Button next;
+    @FXML
+    private TextField outputName;
+    @FXML
+    private Spinner<Integer> sequenceNumber;
+    @FXML
+    private Spinner<Integer> sequenceLength;
+
+    @Override
+    public void initialize(URL url, ResourceBundle rb) {
+    }
+
+    @FXML
+    private void back(ActionEvent event) {
+        super.wizard.back(event);
+    }
+
+    @FXML
+    private void next(ActionEvent event) {
+        ((FastMotifMatchingScript) super.wizard.script).getOutputName().bindBidirectional(outputName.textProperty());
+        ((FastMotifMatchingScript) super.wizard.script).getSequenceLength().bind(sequenceLength.valueProperty());
+        ((FastMotifMatchingScript) super.wizard.script).getSequenceNumber().bind(sequenceNumber.valueProperty());
+        super.wizard.script.setScriptVal(new SimpleStringProperty(((FastMotifMatchingScript) super.wizard.script).toString()));
+        if (Validate()) {
+            super.wizard.next(event);
+        }
+    }
+
+    private boolean Validate() {
+        return !outputName.getText().trim().isEmpty();
+    }
+
+}
+package Controllers;
+
+import Models.JobItem;
+import Models.Jobs;
+import Models.SSHListener;
+import Models.SSHTask;
+import Models.SSHWrapper;
+import Models.Script;
+import Models.SftpTask;
+import com.jcraft.jsch.ChannelSftp;
+import java.awt.Desktop;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.URL;
+import java.time.LocalDate;
+import java.util.ResourceBundle;
+import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.prefs.BackingStoreException;
+import javafx.application.Platform;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.TableRow;
+import javafx.scene.control.TableView;
+import javafx.scene.layout.Pane;
+import javafx.stage.Stage;
+
+public class MainViewController extends Thread implements Initializable, SSHListener {
+
+    private File ABG;
+    private Stage stage;
+    private Scene scene;
+    private Parent parent;
+    private Thread thread;
+    private Vector<ChannelSftp.LsEntry> list;
+    public Jobs jobs;
+    public boolean flag;
+    public WizardController wizard = new WizardController();
+    Thread th;
+    @FXML
+    Button Add;
+    @FXML
+    Button delete;
+    @FXML
+    ProgressIndicator progressIndicator;
+    @FXML
+    TableView<JobItem> jobsTable;
+    @FXML
+    Pane pane;
+    @FXML
+    ContextMenu contextMenu;
+    @FXML
+    MenuItem addMenuItem;
+    @FXML
+    MenuItem removeMenuItem;
+    SimpleDoubleProperty sceneWidth;
+
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        jobs = new Jobs();
+        jobsTable.setRowFactory(tableView -> {
+            TableRow<JobItem> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && (!row.isEmpty()) && row.getItem().getStatus().equalsIgnoreCase("Finished")) {
+                    try {
+                        try {
+                            showOutput(row.getItem());
+                        } catch (InterruptedException ex) {
+                            Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    } catch (IOException ex) {
+                        Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            });
+            return row;
+
+        });
+    }
+
+    private void getDB() {
+        File tmp = new File(ABG.getAbsolutePath() + "/" + "motif_db.csv");
+        if (!tmp.exists()) {
+            thread = new Thread(new SSHTask(this, SSHWrapper.GetRemoteHomeFolder() + "/app/meme/db/motif_databases/motif_db.csv", tmp.getAbsolutePath(), SSHTask.TaskType.DownloadFile));
+            thread.setDaemon(true);
+            thread.start();
+        }
+    }
+
+    public void updatingDaemon() {
+        th = new Thread(() -> {
+            while (true) {
+                try {
+                    Thread.sleep(15000);
+                    System.out.println("Updating");
+                    if (!wizard.script.jobID.isEmpty() && flag) {
+                        wizard.script.qsubThread.join();
+                        jobs.addJob(new JobItem(wizard.script.jobID, LocalDate.now().toString(), "Queued", wizard.script.getName().getValue(), wizard.script.getWallTime().getValue(), wizard.script.getNodes().getValue() + "", wizard.script.getThreads().getValue() + "", wizard.script.getOutputName().getValue(), wizard.script.getType()));
+                        jobsTable.refresh();
+                        wizard.script = new Script();
+                        flag = false;
+                        Platform.runLater(() -> progressIndicator.setVisible(false));
+                    }
+                    jobs.saveData();
+                } catch (InterruptedException | IOException ex) {
+                    Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                Platform.runLater(() -> {
+                    jobsTable.refresh();
+                });
+            }
+        });
+        th.setDaemon(true);
+        th.start();
+    }
+
+    public MainViewController() throws IOException, FileNotFoundException, ClassNotFoundException, BackingStoreException, InterruptedException {
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/Views/MainView.fxml"));
+        fxmlLoader.setController(this);
+        try {
+            parent = (Parent) fxmlLoader.load();
+            scene = new Scene(parent);
+        } catch (IOException ex) {
+
+            throw new RuntimeException(ex);
+        }
+        progressIndicator.layoutXProperty().bind(scene.widthProperty().subtract(40));
+    }
+
+    public void launch(Stage stage) {
+        this.stage = stage;
+        stage.setScene(scene);
+        stage.setResizable(true);
+        stage.show();
+        loadContentThread();
+        getDB();
+    }
+
+    private void showOutput(JobItem job) throws IOException, InterruptedException {
+        Thread th = new Thread(() -> {
+            Platform.runLater(() -> progressIndicator.setVisible(true));
+            File textOut;
+            File htmlOut;
+            System.out.println(job.getType());
+            if (job.getType() == 'T') {
+                textOut = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/" + "tomtom.txt");
+                htmlOut = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/" + "tomtom.html");
+            } else {
+                textOut = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/" + "meme.txt");
+                htmlOut = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/" + "meme.html");
+            }
+            File error = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/ConsoleOutput.txt");
+            if (!textOut.exists() && !htmlOut.exists() && !error.exists()) {
+                try {
+                    getOutputDirectory(job);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            try {
+                thread.join();
+            } catch (InterruptedException ex) {
+                Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            if (htmlOut.exists()) {
+                setHtmlURI(htmlOut, job);
+                showHtmlOutput(job);
+            }
+            if (textOut.exists()) {
+                setTextURI(textOut, job);
+                showTextOutput(job);
+            }
+            if (!error.exists()) {
+                try {
+                    getErrorFile(job, error);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                try {
+                    thread.join();
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                showTextOutput(job);
+            }
+            Platform.runLater(() -> progressIndicator.setVisible(false));
+        });
+        th.setDaemon(true);
+        th.start();
+    }
+
+    private void getOutputDirectory(JobItem job) throws InterruptedException {
+        File output = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/");
+        output.mkdirs();
+        final Thread th = new Thread(new SftpTask(this, SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "jobs/" + job.getOutputName(), SftpTask.TaskType.ListFile));
+        th.setDaemon(true);
+        th.start();
+        thread = new Thread(() -> {
+            try {
+                th.join();
+            } catch (InterruptedException ex) {
+                Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            for (int i = 2; i < list.size(); i++) {
+                Thread tmp = new Thread(new SSHTask(this, SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "jobs/" + job.getOutputName() + "/" + list.get(i).getFilename(), output.getAbsolutePath() + "/" + list.get(i).getFilename(), SSHTask.TaskType.DownloadFile));
+                tmp.setDaemon(true);
+                tmp.start();
+                try {
+                    if (!tmp.isAlive()) {
+                        tmp.join();
+                    }
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        });
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    private void getErrorFile(JobItem job, File error) throws InterruptedException {
+        thread = new Thread(new SSHTask(this, SSHWrapper.GetRemoteHomeFolder() + "/*.e" + job.getId(), error.getAbsolutePath(), SSHTask.TaskType.DownloadFile));
+        thread.setDaemon(true);
+        thread.start();
+        thread.join();
+        job.setOutputText(error.toURI());
+    }
+
+    private void setTextURI(File output, JobItem job) {
+        job.setOutputText(output.toURI());
+    }
+
+    private void setHtmlURI(File output, JobItem job) {
+        job.setOutputHTML(output.toURI());
+    }
+
+    private void showTextOutput(JobItem job) {
+        try {
+            Desktop.getDesktop().browse(job.getOutputText());
+        } catch (IOException ex) {
+            Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void showHtmlOutput(JobItem job) {
+        try {
+            Desktop.getDesktop().browse(job.getOutputHTML());
+        } catch (IOException ex) {
+            Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void loadContentThread() {
+        ABG = new File(SSHWrapper.GetLocalHomeFolder() + "/ABG/");
+        if (!ABG.exists()) {
+            ABG.mkdir();
+        }
+        progressIndicator.setVisible(true);
+        thread = new Thread(() -> {
+            try {
+                thread = new Thread(new SSHTask(this, "/usr/bin/file /home/" + SSHWrapper.username + "/ABG/config/Data.SER"));
+                thread.setDaemon(true);
+                thread.start();
+                thread.join();
+                if (flag) {
+                    thread = new Thread(new SSHTask(this, "/bin/mkdir -p  /home/" + SSHWrapper.username + "/ABG/{config,datasets,jobs}"));
+                    thread.setDaemon(true);
+                    thread.start();
+                } else {
+                    try {
+                        jobs.init();
+                    } catch (IOException | ClassNotFoundException | BackingStoreException ex) {
+                        Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    jobs.th.join();
+                }
+            } catch (InterruptedException ex) {
+                Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            jobsTable.setItems(jobs.getJobs());
+            updatingDaemon();
+            flag = false;
+            Add.setDisable(false);
+            delete.setDisable(false);
+            addMenuItem.setDisable(false);
+            removeMenuItem.setDisable(false);
+            Platform.runLater(() -> progressIndicator.setVisible(true));
+        });
+        thread.setDaemon(true);
+        thread.start();
+
+    }
+
+    public void addJob() {
+        newJob();
+    }
+
+    public void removeJob() {
+        deleteJob();
+    }
+
+    public void newJob() {
+        try {
+            if (wizard.script.qsubThread != null && wizard.script.qsubThread.isAlive()) {
+                wizard.script.qsubThread.join();
+            }
+        } catch (InterruptedException ex) {
+            Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        Platform.runLater(() -> progressIndicator.setVisible(true));
+        wizard = new WizardController();
+        wizard.launch(new Stage());
+        wizard.stage.setOnCloseRequest(e -> {
+            Platform.runLater(() -> progressIndicator.setVisible(false));
+            flag = true;
+        });
+    }
+
+    public void deleteJob() {
+        if (!jobsTable.getSelectionModel().isEmpty() && jobsTable.getSelectionModel().getSelectedItem().getStatus().equalsIgnoreCase("Running")) {
+            th = new Thread(new SSHTask(this, "/opt/pbs/default/bin/qdel " + (jobsTable.getSelectionModel().getSelectedItem()).getId()));
+            th.setDaemon(true);
+            th.start();
+
+        }
+        new Thread(new SSHTask(this, "/bin/rm -rf" + SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "jobs/" + jobsTable.getSelectionModel().getSelectedItem().getOutputName())).start();
+        new Thread(new SSHTask(this, "/bin/rm " + SSHWrapper.GetRemoteHomeFolder() + "/" + jobsTable.getSelectionModel().getSelectedItem().getName() + ".*" + jobsTable.getSelectionModel().getSelectedItem().getId())).start();
+        jobs.removeJob(jobsTable.getSelectionModel().getSelectedItem());
+    }
+
+    @Override
+    public void sshResponse(String strCommand, String strResponse) {
+        Platform.runLater(() -> progressIndicator.setVisible(false));
+        if (strResponse.contains("cannot")) {
+            flag = true;
+        }
+    }
+
+    @Override
+    public void FileDownloadResponse(String strFilePath, Boolean bStatus) {
+        System.out.println("Clear");
+    }
+
+    @Override
+    public void FileUploadResponse(String strFilePath, Boolean bStatus) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void GotFilesList(String strDirecory, Vector<ChannelSftp.LsEntry> lstItems) {
+        list = lstItems;
+    }
+
+    @FXML
+    private void showScript(ActionEvent event) throws InterruptedException, IOException {
+        Thread th = new Thread(() -> {
+            Platform.runLater(() -> progressIndicator.setVisible(true));
+            if (!jobsTable.getSelectionModel().isEmpty()) {
+                JobItem job = jobsTable.getSelectionModel().getSelectedItem();
+                File script = new File(ABG.getAbsolutePath() + "/" + job.getOutputName() + "/script");
+                if (!script.exists()) {
+                    script.mkdirs();
+                    try {
+                        getScriptFile(job, script);
+                        thread.join();
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+
+                if (script.exists()) {
+                    try {
+                        setScriptURI(job, script);
+                    } catch (IOException ex) {
+                        Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    try {
+                        showScript(job);
+                    } catch (IOException ex) {
+                        Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            }
+            Platform.runLater(() -> progressIndicator.setVisible(false));
+        });
+        th.setDaemon(true);
+        th.start();
+    }
+
+    private void showScript(JobItem job) throws IOException {
+        Desktop.getDesktop().browse(job.getScript());
+    }
+
+    private void setScriptURI(JobItem job, File script) throws IOException {
+        job.setScript(script.toURI());
+        Desktop.getDesktop().browse(job.getScript());
+    }
+
+    private void getScriptFile(JobItem job, File script) throws InterruptedException {
+        thread = new Thread(new SSHTask(this, SSHWrapper.GetRemoteHomeFolder() + "/" + SSHWrapper.GetABGFolder() + "jobs/" + job.getName(), script.getAbsolutePath() + "/" + job.getName(), SSHTask.TaskType.DownloadFile));
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    public void close() {
+        System.exit(0);
+    }
+
+}
+
+package Controllers;
+
+import Models.MotifDiscoveryScript;
+import Models.WizardView;
+import java.net.URL;
+import java.util.ResourceBundle;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
+import javafx.geometry.Side;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.Slider;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleGroup;
+
+public class MotifDiscoveryViewController extends WizardView implements Initializable {
+
+    @FXML
+    private Button back;
+    @FXML
+    private Button next;
+    @FXML
+    private TextField outputName;
+    @FXML
+    private CheckBox overWrite;
+    @FXML
+    private CheckBox textOut;
+    @FXML
+    private RadioButton DNA;
+    @FXML
+    private ToggleGroup inputType;
+    @FXML
+    private RadioButton RNA;
+    @FXML
+    private RadioButton Protein;
+    @FXML
+    private ChoiceBox<String> occurrence;
+    @FXML
+    private Spinner<Integer> motifNumber;
+    @FXML
+    private CheckBox motifExact;
+    @FXML
+    private Slider bias;
+    @FXML
+    private Spinner<Integer> motifLength;
+    @FXML
+    private Spinner<Integer> motifLengthMax;
+    @FXML
+    private Spinner<Integer> motifLengthMin;
+    @FXML
+    private Spinner<Integer> gapOpen;
+    @FXML
+    private Spinner<Integer> gapExtend;
+    @FXML
+    private CheckBox trimming;
+    @FXML
+    private CheckBox endGaps;
+    @FXML
+    private Spinner<Integer> minMotifSites;
+    @FXML
+    private Spinner<Integer> maxMotifSites;
+
+    private WizardController wizard;
+    private String ocurr[] = {"zoops", "oops", "anr"};
+
+    @FXML
+
+    @Override
+    public void initialize(URL url, ResourceBundle rb) {
+        DNA.setUserData("dna");
+        RNA.setUserData("rna");
+        Protein.setUserData("protein");
+        outputName.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (outputName.getText().trim().isEmpty()) {
+                outputName.getStyleClass().add("error");
+            } else {
+                outputName.getStyleClass().remove("error");
+            }
+        });
+    }
+
+    @FXML
+    private void back(ActionEvent event) {
+        super.wizard.back(event);
+    }
+
+    @FXML
+    private void next(ActionEvent event) {
+        super.wizard.script.setType('M');
+        ((MotifDiscoveryScript) super.wizard.script).getOutputName().bindBidirectional(outputName.textProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getOverWrite().bindBidirectional(overWrite.selectedProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getOutputType().bindBidirectional(textOut.selectedProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getInputType().bind(new SimpleStringProperty((String) inputType.getSelectedToggle().getUserData()));
+        ((MotifDiscoveryScript) super.wizard.script).getOcurrence().setValue(ocurr[occurrence.getSelectionModel().selectedIndexProperty().getValue()]);
+        ((MotifDiscoveryScript) super.wizard.script).getMotifNumber().bind(motifNumber.valueProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getMaxMotifSites().bind(maxMotifSites.valueProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getMinMotifSites().bind(minMotifSites.valueProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getExactMotifSites().bindBidirectional(motifExact.selectedProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getBias().bindBidirectional(bias.valueProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getMotifLength().bind(motifLength.valueProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getMaxMotifLength().bind(motifLengthMax.valueProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getMinMotifLength().bind(motifLengthMin.valueProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getGapOpeningCost().bind(gapOpen.valueProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getGapExtensionCost().bind(gapExtend.valueProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getTrimming().bindBidirectional(trimming.selectedProperty());
+        ((MotifDiscoveryScript) super.wizard.script).getNoEndGaps().bindBidirectional(endGaps.selectedProperty());
+        super.wizard.script.setScriptVal(new SimpleStringProperty(((MotifDiscoveryScript) super.wizard.script).toString()));
+        if (Validate()) {
+            super.wizard.next(event);
+        }
+
+    }
+
+    private boolean Validate() {
+        return !outputName.getText().trim().isEmpty();
+    }
+}
+package Controllers;
+
+import Models.Database;
+import Models.MotifMatchingScript;
+import Models.SSHListener;
+import Models.SSHWrapper;
+import Models.WizardView;
+import com.jcraft.jsch.ChannelSftp;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ResourceBundle;
+import java.util.Scanner;
+import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Slider;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.TextField;
+
+public class MotifMatchingViewController extends WizardView implements Initializable, SSHListener {
+
+    @FXML
+    private Button back;
+    @FXML
+    private Button next;
+    @FXML
+    private TextField outputName;
+    @FXML
+    private CheckBox overWrite;
+    @FXML
+    private CheckBox textOut;
+    @FXML
+    private ChoiceBox<String> comparison;
+    @FXML
+    private ChoiceBox<String> thresh;
+    @FXML
+    private Slider slider;
+    @FXML
+    private Spinner<Integer> overlap;
+    @FXML
+    private CheckBox completeRows;
+    @FXML
+    private ComboBox<Database> database;
+    @FXML
+    private ComboBox<Database> category;
+
+    private List<Database> Clist;
+    private List<Database> Dlist;
+    private HashMap<Integer, List<Database>> items;
+    private String response;
+
+    @Override
+    public void initialize(URL url, ResourceBundle rb) {
+        Clist = new ArrayList<>();
+        Dlist = new ArrayList<>();
+        items = new HashMap<>();
+        database.getSelectionModel().select(0);
+        comparison.getSelectionModel().select(0);
+        initSlider();
+        try {
+            showDB();
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(MotifMatchingViewController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        category.getItems().setAll(FXCollections.observableArrayList(Clist));
+        category.valueProperty().addListener((obsv, oldVal, newVal) -> {
+            database.getSelectionModel().clearSelection();
+            database.getItems().setAll(items.get(category.getSelectionModel().selectedIndexProperty().getValue()));
+        });
+
+    }
+
+    private void initSlider() {
+        thresh.getSelectionModel().select(0);
+        slider.setBlockIncrement(5);
+        slider.setMax(100.0);
+        slider.setMin(0);
+        slider.setMajorTickUnit(10);
+        slider.setMinorTickCount(1);
+        slider.setValue(10);
+        thresh.valueProperty().addListener((obsv, oldVal, newVal) -> {
+            Platform.runLater(() -> {
+                slider.setValueChanging(true);
+                if (newVal.equalsIgnoreCase("Q")) {
+                    slider.setBlockIncrement(5);
+                    slider.setMax(100.0);
+                    slider.setMin(0);
+                    slider.setMajorTickUnit(10);
+                    slider.setMinorTickCount(1);
+                    slider.setValue(10);
+                } else {
+                    slider.setBlockIncrement(0.05);
+                    slider.setMax(1.0);
+                    slider.setMin(0);
+                    slider.setMajorTickUnit(0.1);
+                    slider.setMinorTickCount(1);
+                    slider.setValue(0.5);
+                }
+                slider.setValueChanging(false);
+            });
+        });
+    }
+
+
+
+    private synchronized void showDB() throws FileNotFoundException {
+        Scanner in = new Scanner(new File(SSHWrapper.GetLocalHomeFolder() + "/ABG/motif_db.csv"));
+        for (int i = 0; i < 10; i++) {
+            in.nextLine();
+        }
+        int count = -1;
+        while (in.hasNext()) {
+            String line = in.nextLine();
+            if (line.contains("----")) {
+                Clist.add(new Database(line.replaceAll("(-|,)", ""), ""));
+                if (++count > 0) {
+                    items.put(count - 1, Dlist);
+                    Dlist = new LinkedList<>();
+                }
+            } else if (!line.isEmpty()) {
+                Dlist.add(new Database(line.split(",")[4], line.split(",")[0]));
+            }
+        }
+        items.put(count, Dlist);
+    }
+
+    @FXML
+    private void back(ActionEvent event) {
+        super.wizard.back(event);
+    }
+
+    @FXML
+    private void next(ActionEvent event) {
+         super.wizard.script.setType('T');
+        ((MotifMatchingScript) super.wizard.script).getOutputName().bindBidirectional(outputName.textProperty());
+        ((MotifMatchingScript) super.wizard.script).getOverWrite().bindBidirectional(overWrite.selectedProperty());
+        ((MotifMatchingScript) super.wizard.script).getOutputType().bindBidirectional(textOut.selectedProperty());
+        ((MotifMatchingScript) super.wizard.script).getAlignedCols().bindBidirectional(completeRows.selectedProperty());
+        ((MotifMatchingScript) super.wizard.script).getComparisonFunc().bind(comparison.getSelectionModel().selectedIndexProperty());
+        ((MotifMatchingScript) super.wizard.script).getDb().bind(new SimpleStringProperty(database.getSelectionModel().getSelectedItem().getPath()));
+        ((MotifMatchingScript) super.wizard.script).getOverlap().bind(overlap.valueProperty());
+        ((MotifMatchingScript) super.wizard.script).getSignificance().bindBidirectional(thresh.valueProperty());
+        ((MotifMatchingScript) super.wizard.script).getThreshold().bindBidirectional(slider.valueProperty());
+        super.wizard.script.setScriptVal(new SimpleStringProperty(((MotifMatchingScript) super.wizard.script).toString()));
+        if (Validate()) {
+            super.wizard.next(event);
+        }
+    }
+
+    private boolean Validate() {
+        return !outputName.getText().trim().isEmpty();
+    }
+
+    @Override
+    public void sshResponse(String strCommand, String strResponse) {
+        System.out.println(strResponse+"!");
+        response = strResponse;
+    }
+
+    @Override
+    public void FileDownloadResponse(String strFilePath, Boolean bStatus) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void FileUploadResponse(String strFilePath, Boolean bStatus) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void GotFilesList(String strDirecory, Vector<ChannelSftp.LsEntry> lstItems) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+}
+package Controllers;
+
+import Models.WizardView;
+import java.net.URL;
+import java.util.ResourceBundle;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleGroup;
+import Models.Script;
+import javafx.beans.property.SimpleStringProperty;
+
+public class PBSViewController extends WizardView implements Initializable {
+
+    @FXML
+    private Button back;
+    @FXML
+    private Button next;
+    @FXML
+    private TextField name;
+    private SimpleStringProperty walltime;
+    @FXML
+    private RadioButton thin;
+    @FXML
+    private ToggleGroup queue;
+    @FXML
+    private RadioButton fat;
+    @FXML
+    private CheckBox month;
+    @FXML
+    private Spinner<Integer> nodes;
+    @FXML
+    private Spinner<Integer> threads;
+    private WizardController wizard;
+    @FXML
+    private Spinner<Integer> hours;
+    @FXML
+    private Spinner<Integer> minutes;
+    @FXML
+    private Spinner<Integer> seconds;
+
+    @Override
+    public void initialize(URL url, ResourceBundle rb) {
+        walltime = new SimpleStringProperty();
+        name.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (name.getText().trim().isEmpty()) {
+                name.getStyleClass().add("error");
+            } else {
+                name.getStyleClass().remove("error");
+            }
+        });
+    }
+
+    @FXML
+    private void back(ActionEvent event) {
+        super.wizard.back(event);
+    }
+
+    @FXML
+    private void next(ActionEvent event) {
+
+        walltime.setValue(hours.getValue() + ":" + minutes.getValue() + ":" + seconds.getValue());
+        super.wizard.script.getName().bind(name.textProperty());
+        super.wizard.script.getWallTime().bind(walltime);
+        super.wizard.script.getQueue().bind(new SimpleStringProperty(thin.isSelected() ? "thin" : "fat"));
+        super.wizard.script.getMonth().bind(month.selectedProperty());
+        super.wizard.script.getNodes().bind(nodes.valueProperty());
+        super.wizard.script.getThreads().bind(threads.valueProperty());
+        if (validate()) {
+            super.wizard.next(event);
+        }
+
+    }
+
+    private boolean validate() {
+        return !name.getText().trim().isEmpty();
+    }
+
+}
+
+package Controllers;
+
+import Models.WizardView;
+import java.net.URL;
+import java.util.ResourceBundle;
+import javafx.application.Platform;
+import static javafx.application.Platform.runLater;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
+import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.TextArea;
+import javafx.stage.WindowEvent;
+
+public class ScriptPreviewController extends WizardView implements Initializable {
+
+    @FXML
+    private Button submit;
+    @FXML
+    private TextArea scriptPreviewField;
+    @FXML
+    private ProgressIndicator loadingIndicator;
+
+    @Override
+    public void initialize(URL url, ResourceBundle rb) {
+    }
+
+    public void setText() {
+        Platform.runLater(() -> scriptPreviewField.setText(super.wizard.script.getScriptVal().getValue()));
+    }
+
+    @FXML
+    private void submit(ActionEvent event) throws InterruptedException {
+        Platform.runLater(() -> loadingIndicator.setVisible(true));
+        super.wizard.script.submit(scriptPreviewField.getText());
+        wizard.stage.fireEvent(new WindowEvent(wizard.stage, WindowEvent.WINDOW_CLOSE_REQUEST));
+    }
+
+}
+
+package Controllers;
+
+import Models.AlertBox;
+import Models.SSHConnectionManager;
+import Models.SSHListener;
+import Models.SSHTask;
+import Models.SSHWrapper;
+import com.jcraft.jsch.ChannelSftp;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.URL;
+import java.net.UnknownHostException;
+import java.util.ResourceBundle;
+import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.prefs.BackingStoreException;
+import javafx.application.Platform;
+import javafx.beans.property.StringProperty;
+import javafx.concurrent.Task;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView;
+import javafx.stage.Stage;
+
+public class SignInViewController implements Initializable, SSHListener {
+
+    private Stage stage;
+    private Scene scene;
+    private Parent parent;
+    private Task<Boolean> task;
+    private Thread thread;
+    private StringProperty username;
+    @FXML
+    private ProgressIndicator progressIndicator;
+    @FXML
+    private TextField usernameTF;
+    @FXML
+    private PasswordField passwordF;
+    @FXML
+    private Button signInBT;
+    @FXML
+    private Button cancelBT;
+    @FXML
+    private ImageView errorN;
+    @FXML
+    private ImageView errorP;
+
+    static SSHTask AuthTask;
+
+    @Override
+    public void initialize(URL url, ResourceBundle rb) {
+        usernameTF.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (usernameTF.getText().trim().isEmpty()) {
+                usernameTF.getStyleClass().add("error");
+               usernameTF.requestFocus();
+            } else {
+                usernameTF.getStyleClass().remove("error");
+            }
+        });
+
+        passwordF.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (passwordF.getText().trim().isEmpty()) {
+                passwordF.getStyleClass().add("error");
+                passwordF.requestFocus();
+            } else {
+                passwordF.getStyleClass().remove("error");
+            }
+        });
+    }
+
+    public SignInViewController() {
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/Views/SignInView.fxml"));
+        fxmlLoader.setController(this);
+        try {
+            parent = (Parent) fxmlLoader.load();
+            scene = new Scene(parent);
+        } catch (IOException ex) {
+            System.out.println("Error displaying login window");
+            throw new RuntimeException(ex);
+        }
+    }
+
+    public void launch(Stage stage) {
+        this.stage = stage;
+        stage.setScene(scene);
+        stage.setResizable(false);
+        stage.show();
+    }
+
+    public void SignIn() throws UnknownHostException, IOException, Exception, Throwable {
+        usernameTF.setText("onajjar0001");
+        passwordF.setText("hphf9Nr2X");
+        if (!usernameTF.getText().equalsIgnoreCase("") && !passwordF.getText().equalsIgnoreCase("")) {
+            Platform.runLater(() -> progressIndicator.setVisible(true));
+
+            thread = new Thread(task = new Task() {
+                @Override
+                protected Boolean call() throws Exception {
+                    return InetAddress.getByName(SSHWrapper.host).isReachable(30000);
+                }
+            });
+            thread.setDaemon(true);
+            thread.start();
+
+            if (task.get()) {
+                SSHWrapper.SetCredentials(usernameTF.getText(), passwordF.getText(), SSHWrapper.host, 22);
+                SSHConnectionManager.SetCredentials(usernameTF.getText(), passwordF.getText(), SSHWrapper.host);
+                thread = new Thread(AuthTask = new SSHTask(this, "/usr/bin/id"));
+                thread.setDaemon(true);
+                thread.start();
+            } else {
+                sshResponse("Connection Error", "Please Check Your VPN !");
+            }
+
+        }
+
+    }
+
+    public void cancelM() {
+        stage.close();
+    }
+
+    @Override
+    public void sshResponse(String strCommand, String strResponse) {
+
+        if (strResponse.equalsIgnoreCase("")) {
+            Platform.runLater(() -> {
+                progressIndicator.setVisible(false);
+                AlertBox.display("Login Error", "Incorrect Username or Password !");
+            });
+        } else if (strResponse.equalsIgnoreCase("Please Check Your VPN !")) {
+            Platform.runLater(() -> {
+                progressIndicator.setVisible(false);
+                AlertBox.display(strCommand, strResponse);
+            });
+        } else {
+
+            Platform.runLater(() -> {
+                stage.close();
+                try {
+                    new MainViewController().launch(stage);
+                } catch (IOException | ClassNotFoundException | BackingStoreException | InterruptedException ex) {
+                    Logger.getLogger(SignInViewController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            });
+        }
+
+    }
+
+    @Override
+    public void FileDownloadResponse(String strFilePath, Boolean bStatus) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void FileUploadResponse(String strFilePath, Boolean bStatus) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void GotFilesList(String strDirecory, Vector<ChannelSftp.LsEntry> lstItems) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+}
+
+package Controllers;
+
+import Models.FastMotifMatchingScript;
+import Models.MotifDiscoveryScript;
+import Models.MotifMatchingScript;
+import Models.WizardView;
+import java.net.URL;
+import java.util.ResourceBundle;
+import javafx.application.Platform;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
+import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.ToggleGroup;
+
+public class TestsSelectionViewController extends WizardView implements Initializable {
+
+    @FXML
+    private Button next;
+    @FXML
+    private RadioButton motifDiscovery;
+    @FXML
+    private ToggleGroup Tests;
+    @FXML
+    private RadioButton MotifMatching;
+    @FXML
+    private RadioButton MotifScanning;
+    @FXML
+    private RadioButton fastMotif;
+    @FXML
+    private ProgressIndicator loadingIndicator;
+
+    private WizardController wizard;
+
+    @Override
+    public void initialize(URL url, ResourceBundle rb) {
+    }
+
+    @FXML
+    private void next(ActionEvent event) {
+        Platform.runLater(() -> loadingIndicator.setVisible(true));
+        if (MotifMatching.isSelected()) {
+            super.wizard.script = new MotifMatchingScript();
+            super.wizard.test = 0;
+        } else if (motifDiscovery.isSelected()) {
+            super.wizard.script = new MotifDiscoveryScript();
+            super.wizard.test = 2;
+        } else {
+            super.wizard.script = new FastMotifMatchingScript();
+            super.wizard.test = 1;
+        }
+        super.wizard.next(event);
+    }
+
+}
+package Controllers;
+
+import Models.Script;
+import Models.WizardView;
+import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+import javafx.beans.property.*;
+import javafx.beans.property.SimpleListProperty;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+
+public class WizardController {
+
+    public Stage stage;
+    private Scene scene;
+    private Parent parent;
+    private Thread thread;
+    private boolean flag;
+    public int current = 0;
+    public Script script = new Script();
+    public ListProperty<String> selectedAzizFiles;
+    private ArrayList<URL> wizard;
+    private ArrayList<Scene> scenes;
+    private ArrayList<WizardView> controllers;
+    public int test;
+
+    public WizardController() {
+        wizard = new ArrayList<>();
+        scenes = new ArrayList<>();
+        controllers = new ArrayList<>();
+        wizard.add(getClass().getResource("/Views/TestsSelectionView.fxml"));
+        wizard.add(getClass().getResource("/Views/DataSelectionView.fxml"));
+        wizard.add(getClass().getResource("/Views/PBSView.fxml"));
+        wizard.add(getClass().getResource("/Views/ScriptPreview.fxml"));
+        selectedAzizFiles = new SimpleListProperty<>();
+        loadScreen();
+    }
+
+    public void launch(Stage stage) {
+        this.stage = stage;
+        stage.initModality(Modality.APPLICATION_MODAL);
+        stage.initStyle(StageStyle.UTILITY);
+        stage.setScene(scenes.get(current));
+        stage.setResizable(false);
+        stage.show();
+
+    }
+
+    public void back(ActionEvent event) {
+        current--;
+        stage.setScene(scenes.get(current));
+    }
+
+    public void next(ActionEvent event) {
+        if (++current == 3) {
+            switch (test) {
+                case 0:
+                    loadScreen(getClass().getResource("/Views/MotifMatchingView.fxml"));
+                    current--;
+                    break;
+                case 1:
+                    loadScreen(getClass().getResource("/Views/FastMotifMatchingView.fxml"));
+                    current--;
+                    break;
+                case 2:
+                    loadScreen(getClass().getResource("/Views/MotifDiscoveryView.fxml"));
+                    current--;
+                    break;
+            }
+            test = -1;
+        }
+        controllers.get(current).setWizard(this);
+        if (current == controllers.size() - 1) {
+            stage.setX(10);
+            ((ScriptPreviewController) controllers.get(current)).setText();
+        }
+        stage.setScene(scenes.get(current));
+    }
+
+    private void loadScreen() {
+        for (int i = 0; i < wizard.size(); i++) {
+
+            FXMLLoader fxmlLoader = new FXMLLoader(wizard.get(i));
+            try {
+                parent = (Parent) fxmlLoader.load(wizard.get(i).openStream());
+                controllers.add((WizardView) fxmlLoader.getController());
+                scene = new Scene(parent);
+            } catch (IOException ex) {
+
+                throw new RuntimeException(ex);
+            }
+
+            scenes.add(scene);
+        }
+        controllers.get(0).setWizard(this);
+    }
+
+    private void loadScreen(URL url) {
+        FXMLLoader fxmlLoader = new FXMLLoader(url);
+        try {
+            parent = (Parent) fxmlLoader.load(url.openStream());
+            controllers.add(3, (WizardView) fxmlLoader.getController());
+            scene = new Scene(parent);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+        scenes.add(3, scene);
+
+    }
+
+}
+package Models;
+
+import javafx.stage.*;
+import javafx.scene.*;
+import javafx.scene.layout.*;
+import javafx.scene.control.*;
+import javafx.geometry.*;
+
+public class AlertBox {
+
+    public static void display(String title, String message) {
+        Stage window = new Stage();
+
+        //Block events to other windows
+        window.initModality(Modality.APPLICATION_MODAL);
+        window.setTitle(title);
+        window.setMinWidth(309);
+        window.setMaxWidth(309);
+        window.setMinHeight(129);
+        window.setMaxHeight(129);
+        window.setAlwaysOnTop(true);
+        Label label = new Label();
+        label.setText(message);
+        Button closeButton = new Button("OK");
+        closeButton.setOnAction(e -> window.close());
+        closeButton.setDefaultButton(true);
+        closeButton.setMinWidth(100);
+        VBox layout = new VBox(25);
+        layout.getChildren().addAll(label, closeButton);
+        layout.setAlignment(Pos.CENTER);
+        Scene scene = new Scene(layout);
+        window.setScene(scene);
+        window.showAndWait();
+    }
+
+}
+package Models;
+
+public class Database {
+
+    private String name;
+    private String path;
+
+    public Database(String name, String path) {
+        this.name = name;
+        String paths[] = path.split(" ");
+        this.path ="";
+        for (int i = 0; i < paths.length; i++) {
+            this.path += SSHWrapper.GetRemoteHomeFolder() + "/app/meme/db/motif_databases/" + paths[i]+" ";
+        }
+
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    @Override
+    public String toString() {
+        return name;
+    }
+
+}
+package Models;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+
+public class FastMotifMatchingScript extends Script {
+
+    private SimpleIntegerProperty sequenceLength;
+    private SimpleIntegerProperty sequenceNumber;
+
+    public FastMotifMatchingScript() {
+        sequenceLength = new SimpleIntegerProperty();
+        sequenceNumber = new SimpleIntegerProperty();
+        outputName = new SimpleStringProperty();
+    }
+
+    public SimpleIntegerProperty getSequenceLength() {
+        return sequenceLength;
+    }
+
+    public void setSequenceLength(SimpleIntegerProperty sequenceLength) {
+        this.sequenceLength = sequenceLength;
+    }
+
+    public SimpleIntegerProperty getSequenceNumber() {
+        return sequenceNumber;
+    }
+
+    public void setSequenceNumber(SimpleIntegerProperty sequenceNumber) {
+        this.sequenceNumber = sequenceNumber;
+    }
+
+    @Override
+    public String toString() {
+        return (super.toString() + "module load composer_xe/2015.2.164 impi/5.0.3.048\n"
+                + "cd " + SSHWrapper.GetRemoteHomeFolder() + "/Motif-Obai\n"
+                + "./main s " + SSHWrapper.GetRemoteHomeFolder() + "/" + outputName.getValue() + " " + sequenceNumber.getValue() + " " + sequenceLength.getValue());
+    }
+
+    public void submit() {
+        super.setScriptVal(new SimpleStringProperty(toString()));
+        try {
+            super.submit(toString());
+        } catch (InterruptedException ex) {
+            Logger.getLogger(MotifDiscoveryScript.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+}
+package Models;
+
+
+public class FileFolder implements Comparable<FileFolder>{
+    public enum Type{
+        File,
+        Folder,
+        Unknow
+    }
+
+    public final String mPath;
+    public final String mName;
+    public final Type mType;
+
+    public FileFolder(String pParent, String strLinuxll) {
+        //-rw-r--r--  1 far5 far 22206819 May 29  2015 octave-4.0.0.tar.gz
+        String tokens[] = strLinuxll.split("\\s*\\s");
+        String Name = strLinuxll.substring(strLinuxll.indexOf(tokens[7])+tokens[7].length()+1);
+        this.mPath = pParent+"\\" + Name;
+        this.mName= Name;
+        if (strLinuxll.charAt(0) == 'd')
+            this.mType = Type.Folder;
+        else
+            this.mType = Type.File;
+    }
+
+    @Override
+    public String toString() {
+        return mName;
+    }
+
+    @Override
+    public int compareTo(FileFolder another) {
+        if (another.mType != this.mType)
+        {
+            if (this.mType == Type.File)
+                return 1;
+            else
+                return -1;
+        }
+        return this.mType.compareTo(another.mType);
+    }
+}package Models;
+
+import java.io.File;
+import java.io.Serializable;
+import java.net.URI;
+
+public class JobItem implements Serializable {
+
+    public String Id;
+    public String Name;
+    public String DateCreated;
+    public String CpuTime;
+    public String WallTime;
+    public String outputName;
+    public String CPUs;
+    public String Nodes;
+    public String Status;
+    public URI script;
+    public URI outputText;
+    public URI outputHTML;
+    public char type;
+
+    public JobItem(String Id, String DateCreated, String Status, String name, String wallTime, String cpusNum, String nodesNum, String outputName, char type) {
+        this.Id = Id;
+        this.DateCreated = DateCreated;
+        this.Status = Status;
+        this.Name = name;
+        this.WallTime = wallTime;
+        this.CPUs = cpusNum;
+        this.Nodes = nodesNum;
+        this.CpuTime = "00:00:00";
+        this.outputName = outputName;
+        this.type = type;
+    }
+
+    public JobItem(String strStatus) {
+        String info[] = strStatus.split("\\|");
+        this.Id = info[1].trim();
+        this.Name = info[2].trim();
+        this.CpuTime = info[4].trim();
+        this.WallTime = info[5].trim();
+        this.CPUs = info[7].trim();
+        this.Nodes = info[8].trim();
+    }
+
+    public String getId() {
+        return Id;
+    }
+
+    public void setId(String Id) {
+        this.Id = Id;
+    }
+
+    public String getName() {
+        return Name;
+    }
+
+    public void setName(String Name) {
+        this.Name = Name;
+    }
+
+    public String getDateCreated() {
+        return DateCreated;
+    }
+
+    public void setDateCreated(String DateCreated) {
+        this.DateCreated = DateCreated;
+    }
+
+    public String getCpuTime() {
+        return CpuTime;
+    }
+
+    public void setCpuTime(String CpuTime) {
+        this.CpuTime = CpuTime;
+    }
+
+    public String getWallTime() {
+        return WallTime;
+    }
+
+    public void setWallTime(String WallTime) {
+        this.WallTime = WallTime;
+    }
+
+    public String getCPUs() {
+        return CPUs;
+    }
+
+    public void setCPUs(String CPUs) {
+        this.CPUs = CPUs;
+    }
+
+    public String getNodes() {
+        return Nodes;
+    }
+
+    public void setNodes(String Nodes) {
+        this.Nodes = Nodes;
+    }
+
+    public String getStatus() {
+        return Status;
+    }
+
+    public void setStatus(String Status) {
+        this.Status = Status;
+    }
+
+    public String getOutputName() {
+        return outputName;
+    }
+
+    public void setOutputName(String outputName) {
+        this.outputName = outputName;
+    }
+
+    public URI getScript() {
+        return script;
+    }
+
+    public void setScript(URI script) {
+        this.script = script;
+    }
+
+    public URI getOutputText() {
+        return outputText;
+    }
+
+    public void setOutputText(URI outputText) {
+        this.outputText = outputText;
+    }
+
+    public URI getOutputHTML() {
+        return outputHTML;
+    }
+
+    public void setOutputHTML(URI outputHTML) {
+        this.outputHTML = outputHTML;
+    }
+
+    public char getType() {
+        return type;
+    }
+
+    public void setType(char type) {
+        this.type = type;
+    }
+
+    
+    
+
+}
+package Models;
+
+import com.jcraft.jsch.ChannelSftp;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.prefs.BackingStoreException;
+import javafx.collections.ObservableList;
+import java.util.prefs.Preferences;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+
+public class Jobs implements SSHListener {
+
+    private ObservableList<JobItem> jobs = FXCollections.observableArrayList();
+    private FileOutputStream fileOutput;
+    private ObjectOutputStream objectOutput;
+    private FileInputStream fileInput;
+    private ObjectInputStream objectInput;
+    static SSHTask AuthTasks;
+    static Preferences pref;
+
+    File file;
+    SimpleStringProperty fileu = new SimpleStringProperty();
+    public Thread th = new Thread();
+
+    public Jobs() {
+
+    }
+
+    public void addJob(JobItem e) {
+        jobs.add(e);
+        try {
+            saveData();
+        } catch (IOException ex) {
+            Logger.getLogger(Jobs.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void removeJob(JobItem e) {
+        jobs.remove(e);
+    }
+
+    public void init() throws IOException, ClassNotFoundException, BackingStoreException {
+        pref = Preferences.userRoot().node(this.getClass().getName());
+        file = new File("Data.SER");
+        this.downloadData();
+    }
+
+    private void loadData() throws FileNotFoundException, IOException, ClassNotFoundException {
+        fileInput = new FileInputStream(pref.get("data", null));
+        objectInput = new ObjectInputStream(fileInput);
+        List<JobItem> list = (ArrayList<JobItem>) objectInput.readObject();
+        jobs = FXCollections.observableArrayList(list);
+        fileInput.close();
+        objectInput.close();
+    }
+
+    private void prepData() throws IOException, FileNotFoundException, ClassNotFoundException {
+        try {
+            File backUp = (File) getClass().getClassLoader().getResource(pref.absolutePath() + File.separator + "bData.SER").getContent();
+            File data = (File) getClass().getClassLoader().getResource(pref.absolutePath() + File.separator + "Data.SER").getContent();
+            if (backUp.lastModified() < data.lastModified()) {
+                backUp.renameTo(data);
+            }
+        } catch (Exception ex) {
+            pref.put("data", file.toString());
+        }
+        loadData();
+    }
+
+    private void downloadData() throws ClassNotFoundException {
+        while (th.isAlive()) {
+        }
+        th = new Thread(new SSHTask(this, "/home/" + SSHWrapper.username + "/ABG/config/Data.SER", file.getAbsolutePath(), SSHTask.TaskType.DownloadFile));
+        th.setDaemon(true);
+        th.start();
+    }
+
+    public void saveData() throws FileNotFoundException, IOException {
+        update();
+        file = new File("Data.SER");
+        fileOutput = new FileOutputStream(file);
+        objectOutput = new ObjectOutputStream(fileOutput);
+        objectOutput.writeObject(new ArrayList<JobItem>(jobs));
+        objectOutput.close();
+        fileOutput.close();
+        uploadData();
+    }
+
+    public void update() {
+        for (JobItem job : this.jobs) {
+            if (!job.getStatus().equalsIgnoreCase("Finished")) {
+                new Thread(new SSHTask(this, "/opt/pbs/default/bin/qstat -x " + job.getId())).start();
+            }
+        }
+
+    }
+
+    public void updateJob(String strCommand, String strResponse) {
+        for (JobItem job : jobs) {
+            if (job.getId().equalsIgnoreCase(strCommand.split(" ")[2])) {
+                if (strResponse.contains("Unknown")) {
+                    job.setStatus("Error");
+                } else {
+                    strResponse = strResponse.replaceAll(" +", " ");
+                    switch (strResponse.split(" ")[16]) {
+                        case "R":
+                            job.setStatus("Running");
+                            break;
+                        case "F":
+                            job.setStatus("Finished");
+                            break;
+                        case "E":
+                            job.setStatus("Error");
+                            break;
+                        default:
+                            job.setStatus("Queued");
+                    }
+                    if (job.getStatus().equalsIgnoreCase("Running")) {
+                        job.setCpuTime(strResponse.split(" ")[15]);
+                    }
+
+                }
+            }
+        }
+    }
+
+    public ObservableList<JobItem> getJobs() {
+        return jobs;
+    }
+
+    private void uploadData() {
+        while (th.isAlive()) {
+        }
+        th = new Thread(new SSHTask(this, file.getAbsolutePath(), "/home/" + SSHWrapper.username + "/ABG/config/Data.SER", SSHTask.TaskType.UploadFile));
+        th.setDaemon(true);
+        th.start();
+    }
+
+    @Override
+    public void sshResponse(String strCommand, String strResponse) {
+       
+        if (strCommand.contains("qstat")) {
+            updateJob(strCommand, strResponse);
+        }
+    }
+
+    @Override
+    public void FileDownloadResponse(String strFilePath, Boolean bStatus) {
+        try {
+            prepData();
+        } catch (IOException | ClassNotFoundException ex) {
+            Logger.getLogger(Jobs.class
+                    .getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    @Override
+    public void FileUploadResponse(String strFilePath, Boolean bStatus) {
+
+    }
+
+    @Override
+    public void GotFilesList(String strDirecory, Vector<ChannelSftp.LsEntry> lstItems) {
+        throw new UnsupportedOperationException("Not supported yet."); 
+    }
+
+}
+package Models;
+
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
+import java.io.File;
+
+public class LocalTree {
+
+    public static void constructTree(String Path, TreeItem parent) {
+        parent.setExpanded(true);
+        File file = new File(Path);
+        TreeView<File> tree = new TreeView<File>(parent);
+        File[] files = file.listFiles();
+        for (File child : files) {
+            TreeItem node = new TreeItem<File>(child);
+            if (!child.isHidden() && child.isDirectory()) {
+                node.getChildren().add(null);
+                parent.getChildren().add(node);
+            } else if (!child.isHidden() && !child.getName().startsWith(".")) {
+                parent.getChildren().add(node);
+            }
+        }
+    }
+}
+package Models;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+
+public class MotifDiscoveryScript extends Script {
+
+    private SimpleBooleanProperty overWrite;
+    private SimpleBooleanProperty outputType;
+    private SimpleStringProperty inputType;
+    private SimpleStringProperty ocurrence;
+    private SimpleIntegerProperty motifNumber;
+    private SimpleIntegerProperty maxMotifSites;
+    private SimpleIntegerProperty minMotifSites;
+    private SimpleBooleanProperty exactMotifSites;
+    private SimpleDoubleProperty bias;
+    private SimpleIntegerProperty motifLength;
+    private SimpleIntegerProperty maxMotifLength;
+    private SimpleIntegerProperty minMotifLength;
+    private SimpleIntegerProperty gapOpeningCost;
+    private SimpleIntegerProperty gapExtensionCost;
+    private SimpleBooleanProperty trimming;
+    private SimpleBooleanProperty noEndGaps;
+
+    public MotifDiscoveryScript() {
+        outputName = new SimpleStringProperty();
+        overWrite = new SimpleBooleanProperty();
+        outputType = new SimpleBooleanProperty();
+        inputType = new SimpleStringProperty();
+        ocurrence = new SimpleStringProperty();
+        motifNumber = new SimpleIntegerProperty();
+        maxMotifSites = new SimpleIntegerProperty();
+        minMotifSites = new SimpleIntegerProperty();
+        exactMotifSites = new SimpleBooleanProperty();
+        bias = new SimpleDoubleProperty();
+        motifLength = new SimpleIntegerProperty();
+        maxMotifLength = new SimpleIntegerProperty();
+        minMotifLength = new SimpleIntegerProperty();
+        gapOpeningCost = new SimpleIntegerProperty();
+        gapExtensionCost = new SimpleIntegerProperty();
+        trimming = new SimpleBooleanProperty();
+        noEndGaps = new SimpleBooleanProperty();
+    }
+
+    public SimpleStringProperty getOutputName() {
+        return outputName;
+    }
+
+    public SimpleBooleanProperty getOverWrite() {
+        return overWrite;
+    }
+
+    public SimpleBooleanProperty getOutputType() {
+        return outputType;
+    }
+
+    public SimpleStringProperty getInputType() {
+        return inputType;
+    }
+
+    public SimpleStringProperty getOcurrence() {
+        return ocurrence;
+    }
+
+    public SimpleIntegerProperty getMotifNumber() {
+        return motifNumber;
+    }
+
+    public SimpleIntegerProperty getMaxMotifSites() {
+        return maxMotifSites;
+    }
+
+    public SimpleIntegerProperty getMinMotifSites() {
+        return minMotifSites;
+    }
+
+    public SimpleBooleanProperty getExactMotifSites() {
+        return exactMotifSites;
+    }
+
+    public SimpleDoubleProperty getBias() {
+        return bias;
+    }
+
+    public SimpleIntegerProperty getMotifLength() {
+        return motifLength;
+    }
+
+    public SimpleIntegerProperty getMaxMotifLength() {
+        return maxMotifLength;
+    }
+
+    public SimpleIntegerProperty getMinMotifLength() {
+        return minMotifLength;
+    }
+
+    public SimpleIntegerProperty getGapOpeningCost() {
+        return gapOpeningCost;
+    }
+
+    public SimpleIntegerProperty getGapExtensionCost() {
+        return gapExtensionCost;
+    }
+
+    public SimpleBooleanProperty getTrimming() {
+        return trimming;
+    }
+
+    public SimpleBooleanProperty getNoEndGaps() {
+        return noEndGaps;
+    }
+
+    @Override
+    public String toString() {
+        return (super.toString() + "module load mpi/openmpi-1.8.5/gcc-4.4.7 \n" + "cd /home/" + SSHWrapper.username + "/app/meme/bin\n"
+                + "mpirun ./meme " + SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "datasets/" + super.getInputFile().getValue() + " " + " -o" + (overWrite.getValue() ? "c" : " ") + SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "jobs/" + outputName.getValue() + " -" + inputType.getValue()
+                + (outputType.getValue() ? " -text " : "") + (ocurrence.getValue().isEmpty() ? "" : " -mod " + ocurrence.getValue()) + " -nmotifs " + motifNumber.getValue() + (exactMotifSites.getValue() ? " -nsites " + maxMotifSites.getValue() : "")
+                + " -minsites " + minMotifSites.getValue() + " -maxsites " + maxMotifSites.getValue() + " -wnsites " + bias.getValue() + " -w " + motifLength.getValue()
+                + " -minw " + minMotifLength.getValue() + " -maxw " + maxMotifLength.getValue() + (trimming.getValue() ? " -nomatrim " : " ") + " -wg " + gapOpeningCost.getValue() + " -ws " + gapExtensionCost.getValue() + (noEndGaps.getValue() ? " -noendgaps " : ""));
+    }
+
+    @Override
+    public void setType(char type) {
+        super.setType(type);
+    }
+
+    public void submit() {
+        super.setType('M');
+        super.setScriptVal(new SimpleStringProperty(toString()));
+        try {
+            super.submit(toString());
+        } catch (InterruptedException ex) {
+            Logger.getLogger(MotifDiscoveryScript.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+}
+package Models;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+
+public class MotifMatchingScript extends Script {
+
+    private SimpleBooleanProperty overWrite;
+    private SimpleBooleanProperty outputType;
+    private SimpleBooleanProperty alignedCols;
+    private SimpleStringProperty db;
+    private SimpleIntegerProperty comparisonFunc;
+    private SimpleDoubleProperty threshold;
+    private SimpleStringProperty significance;
+    private SimpleIntegerProperty overlap;
+
+    public MotifMatchingScript() {
+        this.outputName = new SimpleStringProperty();
+        this.overWrite = new SimpleBooleanProperty();
+        this.outputType = new SimpleBooleanProperty();
+        this.alignedCols = new SimpleBooleanProperty();
+        this.db = new SimpleStringProperty();
+        this.comparisonFunc = new SimpleIntegerProperty();
+        this.threshold = new SimpleDoubleProperty();
+        this.significance = new SimpleStringProperty();
+        this.overlap = new SimpleIntegerProperty();
+    }
+
+    public SimpleStringProperty getOutputName() {
+        return outputName;
+    }
+
+    public SimpleBooleanProperty getOverWrite() {
+        return overWrite;
+    }
+
+    public SimpleBooleanProperty getOutputType() {
+        return outputType;
+    }
+
+    public SimpleBooleanProperty getAlignedCols() {
+        return alignedCols;
+    }
+
+    public SimpleStringProperty getDb() {
+        return db;
+    }
+
+    public SimpleIntegerProperty getComparisonFunc() {
+        return comparisonFunc;
+    }
+
+    public SimpleDoubleProperty getThreshold() {
+        return threshold;
+    }
+
+    public SimpleStringProperty getSignificance() {
+        return significance;
+    }
+
+    public SimpleIntegerProperty getOverlap() {
+        return overlap;
+    }
+
+    @Override
+    public void setType(char type) {
+        super.type = 'T';
+    }
+    
+    
+
+    @Override
+    public String toString() {
+        return (super.toString() + "module load mpi/openmpi-1.8.5/gcc-4.4.7 \n"+ "cd /home/" + SSHWrapper.username + "/app/meme/bin\n"
+                + "mpirun ./tomtom " + " -o " + (overWrite.getValue() ? "c" : "") + SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "jobs/" + outputName.getValue()
+                + (outputType.getValue() ? " -text" : "") + (alignedCols.getValue() ? " -incomplete-scores" : "") + " -min-overlap " + overlap.getValue() + (significance.getValueSafe().equalsIgnoreCase("E") ? " -evalue" : "") + " -thresh " + threshold.getValue() + " -dist " + (comparisonFunc.getValue() == 0 ? "pearson " : comparisonFunc.getValue() == 1 ? " ed " : " sandelin ")
+                + SSHWrapper.GetRemoteHomeFolder()+SSHWrapper.GetABGFolder() + "datasets/" + super.getInputFile().getValue() + " " + db.getValueSafe());
+    }
+
+    public void submit() {
+        super.setScriptVal(new SimpleStringProperty(toString()));
+        try {
+            super.submit(toString());
+        } catch (InterruptedException ex) {
+            Logger.getLogger(MotifMatchingScript.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+}
+package Models;
+
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.SftpException;
+import java.util.Vector;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
+
+public class RemoteTree extends Thread implements SSHListener {
+
+    static Vector<ChannelSftp.LsEntry> list;
+    static Thread th;
+
+    public void constructTree(String remotePath, TreeItem parent) throws SftpException, JSchException {
+        th = new Thread(new SftpTask(this, remotePath, SftpTask.TaskType.ListFile));
+        th.setDaemon(true);
+        th.start();
+        while (th.isAlive()) {
+        }
+        parent.setExpanded(true);
+        TreeView<ChannelSftp.LsEntry> tree = new TreeView<ChannelSftp.LsEntry>(parent);
+        for (ChannelSftp.LsEntry oListItem : list) {
+            TreeItem node = new TreeItem<ChannelSftp.LsEntry>(oListItem);
+            if (!oListItem.getFilename().startsWith(".") && oListItem.getAttrs().isDir()) {
+                constructTree(remotePath + "/" + oListItem.getFilename(), node);
+                parent.getChildren().add(node);
+            } else if (!".".equals(oListItem.getFilename()) && !"..".equals(oListItem.getFilename())) {
+                parent.getChildren().add(node);
+            }
+        }
+    }
+
+    @Override
+    public void sshResponse(String strCommand, String strResponse) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void FileDownloadResponse(String strFilePath, Boolean bStatus) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void FileUploadResponse(String strFilePath, Boolean bStatus) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void GotFilesList(String strDirecory, Vector<ChannelSftp.LsEntry> lstItems) {
+        list = lstItems;
+    }
+}
+package Models;
+
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelShell;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.Session;
+
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.util.List;
+import java.util.Properties;
+
+
+public class SSHConnectionManager {
+
+    private static Session mSession;
+    private static ChannelShell mChannel;
+    private static String mUsername = "";
+    private static String mPassword = "";
+    private static String mHostname = "";
+
+    public static void SetCredentials(String strUserName, String strPassword, String strHostname){
+        mUsername = strUserName;
+        mPassword = strPassword;
+        mHostname = strHostname;
+    }
+
+    private static Session getSession(){
+        if(mSession == null || !mSession.isConnected()){
+            mSession= connect();
+        }
+        return mSession;
+    }
+
+    private static Channel openChannel(){
+        if(mChannel == null || !mChannel.isConnected()){
+            try{
+                mChannel= (ChannelShell)getSession().openChannel("shell");
+                mChannel.connect();
+
+            }catch(Exception e){
+                System.out.println("Error while opening channel: "+ e);
+            }
+        }
+        return mChannel;
+    }
+
+    private static Session connect(){
+        JSch jSch = new JSch();
+        try {
+
+            mSession = jSch.getSession(mUsername, mHostname, 22);
+            mSession.setConfig("StrictHostKeyChecking", "no");
+            mSession.setPassword(mPassword);
+
+            mSession.connect();
+
+        }catch(Exception e){
+            System.out.println("An error occurred while connecting to "+mHostname+": "+e);
+        }
+        return mSession;
+    }
+
+    public static String executeCommands(List<String> lstCommands){
+        String strResult = "";
+        try{
+            openChannel();
+            sendCommands(lstCommands);
+            strResult = readChannelOutput();
+        }catch(Exception e){
+            System.out.println("An error ocurred during executeCommands: "+e);
+        }
+        return strResult;
+    }
+
+    private static void sendCommands(List<String> lstCommands){
+
+        try{
+            PrintStream out = new PrintStream(mChannel.getOutputStream());
+
+            out.println("#!/bin/bash");
+            for(String strCommand : lstCommands) {
+                out.println(strCommand);
+            }
+            out.println("exit");
+            out.flush();
+        }catch(Exception e){
+            System.out.println("Error while sending commands: "+ e);
+        }
+    }
+
+    private static String readChannelOutput(){
+        StringBuilder strResult = new StringBuilder();
+
+        byte[] buffer = new byte[1024];
+
+        try{
+            InputStream in = mChannel.getInputStream();
+            String line = "";
+            while (true){
+                while (in.available() > 0) {
+                    int i = in.read(buffer, 0, 1024);
+                    if (i < 0) {
+                        break;
+                    }
+                    line = new String(buffer, 0, i);
+                    strResult.append(line);
+                    strResult.append(System.getProperty("line.separator"));
+                    //System.out.println(line);
+                }
+
+                if(line.contains("logout")){
+                    break;
+                }
+
+                if (mChannel.isClosed()){
+                    break;
+                }
+                try {
+                    Thread.sleep(1000);
+                } catch (Exception ee){}
+            }
+        }catch(Exception e){
+            System.out.println("Error while reading channel output: "+ e);
+        }
+        return strResult.toString();
+    }
+
+    public static void close(){
+        mChannel.disconnect();
+        mSession.disconnect();
+    }
+}package Models;
+
+import com.jcraft.jsch.ChannelSftp;
+import java.util.Vector;
+
+public interface SSHListener {
+    public void sshResponse(String strCommand, String strResponse);
+    public void FileDownloadResponse(String strFilePath, Boolean bStatus);
+    public void FileUploadResponse(String strFilePath, Boolean bStatus);
+    public void GotFilesList(String strDirecory, Vector<ChannelSftp.LsEntry> lstItems);
+}package Models;
+
+import javafx.concurrent.*;
+import java.util.ArrayList;
+import java.util.List;
+
+
+public class SSHTask extends Task {
+
+    public enum TaskType{
+        Command,
+        UploadFile,
+        DownloadFile,
+        ListFile,
+        Unknow
+    }
+    private SSHListener mListener;
+    private String mCommand;
+    private String mSourceFile;
+    private String mDestFile;
+    private   TaskType mType;
+    private String strResult;
+
+    public SSHTask(Object context, String command) {
+        mType = TaskType.Command;
+        if (context instanceof SSHListener) {
+            mListener = (SSHListener) context;
+        }else{
+            throw new RuntimeException(context.toString()
+                    + " must implement SSHListener");
+        }
+        mCommand = command;
+    }
+
+    public SSHTask(Object context, String strSourceFile, String strDestFile, TaskType pTaskType) {
+        mType = pTaskType;
+        if (context instanceof SSHListener) {
+            mListener = (SSHListener) context;
+        }else{
+            throw new RuntimeException(context.toString()
+                    + " must implement SSHListener");
+        }
+        mSourceFile = strSourceFile;
+        mDestFile = strDestFile;
+    }
+    
+    
+     @Override
+    protected Void call() throws Exception {
+        try {
+            if (mType == TaskType.Command) {
+                List<String> lstCommads = new ArrayList<String>();
+                lstCommads.add(mCommand);
+                 strResult = SSHWrapper.executeRemoteCommand(mCommand);           
+            } else if (mType == TaskType.UploadFile) {
+                boolean bResult = SSHWrapper.UploadFile(mSourceFile, mDestFile);
+                 strResult =  Boolean.toString(bResult);
+            } else if (mType == TaskType.DownloadFile){
+                boolean bResult = SSHWrapper.DownloadFile(mSourceFile, mDestFile);
+                 strResult =  Boolean.toString(bResult);
+            }
+        } catch (Exception e) {
+             strResult =  "";
+        }
+        return null;
+       
+    }
+
+    @Override
+    protected void done() {
+        if (mType == TaskType.Command)
+            mListener.sshResponse(mCommand, strResult);
+        else if (mType == TaskType.DownloadFile)
+            mListener.FileDownloadResponse(mDestFile, Boolean.parseBoolean(strResult));
+        else if (mType == TaskType.UploadFile)
+            mListener.FileUploadResponse(mDestFile, Boolean.parseBoolean(strResult));
+    }
+}
+
+package Models;
+import com.jcraft.jsch.*;
+import java.io.*;
+import static java.lang.Thread.sleep;
+import java.util.Vector;
+
+public class SSHWrapper {
+    public static String username;
+    public static String password;
+    public static String host = "10.113.16.7";
+    public static int port;
+
+    public static String GetLocalHomeFolder(){
+        System.out.println(System.getProperty("user.home"));
+        return System.getProperty("user.home");
+    }
+    
+    public static String GetRemoteHomeFolder(){
+        return "/home/"+username;
+    }
+    
+    public static String GetABGFolder(){
+        return "/ABG/";
+    }
+    
+    public static void SetCredentials(String Username, String Password, String Hostname, int Port) {
+        username = Username;
+        password = Password;
+        host = Hostname;
+        port = Port;
+
+    }
+
+    public static String executeRemoteCommand(String cmd) throws Exception {
+
+        JSch jsch = new JSch();
+        Session session = jsch.getSession(username, host, port);
+        session.setPassword(password);
+
+        // Avoid asking for key confirmation
+        session.setConfig("StrictHostKeyChecking", "no");
+
+        session.connect();
+
+        // SSH Channel
+        ChannelExec channelssh = (ChannelExec) session.openChannel("exec");
+
+        //PrintStream out = new PrintStream(channelssh.getOutputStream());
+        InputStream in = channelssh.getInputStream();
+        String result = "";
+        byte[] temp = new byte[10000];
+        int iTotalSleep = 10000;
+
+        channelssh.setCommand(cmd);
+        channelssh.connect();
+
+        while (in.available() == 0 && iTotalSleep > 0) {
+            sleep(500);
+            iTotalSleep -= 300;
+        }
+        while (in.available() > 0) {
+            int x = in.read(temp);
+            result += new String(temp, 0, x);
+           sleep(500);
+        }
+
+
+        channelssh.disconnect();
+        session.disconnect();
+        return result;
+    }
+
+
+    public static boolean CopyFileToRemoteEx(String strLocalFile, String strRemoteDest) {
+
+        FileInputStream fis = null;
+        try {
+            JSch jsch = new JSch();
+            Session session = jsch.getSession(username, host, port);
+            session.setPassword(password);
+            session.connect();
+
+            boolean ptimestamp = true;
+
+            // exec 'scp -t rfile' remotely
+            String command = "scp " + (ptimestamp ? "-p" : "") + " -t " + strLocalFile;
+            Channel channel = session.openChannel("exec");
+            ((ChannelExec) channel).setCommand(command);
+
+            // get I/O streams for remote scp
+            OutputStream out = channel.getOutputStream();
+            InputStream in = channel.getInputStream();
+
+            channel.connect();
+            if (checkAck(in) != 0) {
+                System.exit(0);
+            }
+
+            File _lfile = new File(strRemoteDest);
+
+            if (ptimestamp) {
+                command = "T " + (_lfile.lastModified() / 1000) + " 0";
+                // The access time should be sent here,
+                // but it is not accessible with JavaAPI ;-<
+                command += (" " + (_lfile.lastModified() / 1000) + " 0\n");
+                out.write(command.getBytes());
+                out.flush();
+                if (checkAck(in) != 0) {
+                    return false;
+                }
+            }
+
+            // send "C0644 filesize filename", where filename should not include '/'
+            long filesize = _lfile.length();
+            command = "C0644 " + filesize + " ";
+            if (strLocalFile.lastIndexOf('/') > 0) {
+                command += strLocalFile.substring(strLocalFile.lastIndexOf('/') + 1);
+            } else {
+                command += strLocalFile;
+            }
+            command += "\n";
+            out.write(command.getBytes());
+            out.flush();
+            if (checkAck(in) != 0) {
+                System.exit(0);
+            }
+
+            // send a content of lfile
+            fis = new FileInputStream(strLocalFile);
+            byte[] buf = new byte[1024];
+            while (true) {
+                int len = fis.read(buf, 0, buf.length);
+                if (len <= 0) break;
+                out.write(buf, 0, len); //out.flush();
+            }
+            fis.close();
+            fis = null;
+            // send '\0'
+            buf[0] = 0;
+            out.write(buf, 0, 1);
+            out.flush();
+            if (checkAck(in) != 0) {
+                System.exit(0);
+            }
+            out.close();
+
+            channel.disconnect();
+            session.disconnect();
+
+            return true;
+        } catch (Exception e) {
+            System.out.println(e);
+            try {
+                if (fis != null) fis.close();
+            } catch (Exception ee) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    static int checkAck(InputStream in) throws IOException {
+        int b = in.read();
+        // b may be 0 for success,
+        //          1 for error,
+        //          2 for fatal error,
+        //          -1
+        if (b == 0) return b;
+        if (b == -1) return b;
+
+        if (b == 1 || b == 2) {
+            StringBuffer sb = new StringBuffer();
+            int c;
+            do {
+                c = in.read();
+                sb.append((char) c);
+            }
+            while (c != '\n');
+            if (b == 1) { // error
+                System.out.print(sb.toString());
+            }
+            if (b == 2) { // fatal error
+                System.out.print(sb.toString());
+            }
+        }
+        return b;
+    }
+
+    public static boolean UploadFile(String mSourceFile, String mDestFile) {
+        try {
+            JSch jsch = new JSch();
+            Session session = jsch.getSession(username, host, port);
+            session.setPassword(password);
+            // Avoid asking for key confirmation
+            session.setConfig("StrictHostKeyChecking", "no");
+
+            session.connect();
+
+            ChannelSftp channel = (ChannelSftp) session.openChannel("sftp");
+            channel.connect();
+            channel.put(mSourceFile, mDestFile);
+            channel.exit();
+            session.disconnect();
+        } catch (JSchException e) {
+            e.printStackTrace();
+            return false;
+        } catch (SftpException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean DownloadFile(String mSourceFile, String mDestFile) {
+        try {
+            JSch jsch = new JSch();
+            Session session = jsch.getSession(username, host, port);
+            session.setPassword(password);
+            // Avoid asking for key confirmation
+            session.setConfig("StrictHostKeyChecking", "no");
+
+            session.connect();
+
+            ChannelSftp channel = (ChannelSftp) session.openChannel("sftp");
+            channel.connect();
+            channel.get(mSourceFile, mDestFile);
+            channel.exit();
+            session.disconnect();
+        } catch (JSchException e) {
+            e.printStackTrace();
+            return false;
+        } catch (SftpException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+    public static Vector<ChannelSftp.LsEntry> ListFile(String pFolderPath) {
+        Vector<ChannelSftp.LsEntry> result = null;
+        try {
+            JSch jsch = new JSch();
+            Session session = jsch.getSession(username, host, port);
+            session.setPassword(password);
+            // Avoid asking for key confirmation
+            session.setConfig("StrictHostKeyChecking", "no");
+
+            session.connect();
+
+            ChannelSftp channel = (ChannelSftp) session.openChannel("sftp");
+            channel.connect();
+            result = channel.ls(pFolderPath);
+            channel.exit();
+            session.disconnect();
+        } catch (JSchException e) {
+            e.printStackTrace();
+        } catch (SftpException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+}
+
+
+
+
+package Models;
+
+import com.jcraft.jsch.ChannelSftp;
+import java.io.Serializable;
+import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javafx.beans.property.*;
+
+public class Script implements SSHListener, Serializable {
+
+    private SimpleStringProperty name;
+    private SimpleStringProperty wallTime;
+    private SimpleStringProperty queue;
+    private SimpleBooleanProperty month;
+    private SimpleIntegerProperty nodes;
+    private SimpleIntegerProperty threads;
+    private SimpleStringProperty inputFile;
+    protected SimpleStringProperty outputName;
+    private SimpleStringProperty scriptVal;
+    public Thread submitThread;
+    public Thread uploadThread;
+    public Thread qsubThread;
+    public String jobID = "";
+    public char type;
+
+    public Script() {
+        name = new SimpleStringProperty();
+        wallTime = new SimpleStringProperty();
+        queue = new SimpleStringProperty();
+        month = new SimpleBooleanProperty();
+        nodes = new SimpleIntegerProperty();
+        threads = new SimpleIntegerProperty();
+        inputFile = new SimpleStringProperty();
+        scriptVal = new SimpleStringProperty();
+    }
+
+    public Script(SimpleStringProperty name, SimpleStringProperty wallTime, SimpleStringProperty queue, SimpleBooleanProperty month, SimpleIntegerProperty nodes, SimpleIntegerProperty threads, SimpleStringProperty inputFile) {
+        this.name = name;
+        this.wallTime = wallTime;
+        this.queue = queue;
+        this.month = month;
+        this.nodes = nodes;
+        this.threads = threads;
+        this.inputFile = inputFile;
+    }
+
+    public SimpleStringProperty getOutputName() {
+        return outputName;
+    }
+
+    public void setOutputName(SimpleStringProperty outputName) {
+        this.outputName = outputName;
+    }
+
+    public SimpleStringProperty getName() {
+        return name;
+    }
+
+    public void setName(SimpleStringProperty name) {
+        this.name = name;
+    }
+
+    public SimpleStringProperty getWallTime() {
+        return wallTime;
+    }
+
+    public void setWallTime(SimpleStringProperty wallTime) {
+        this.wallTime = wallTime;
+    }
+
+    public SimpleStringProperty getQueue() {
+        return queue;
+    }
+
+    public void setQueue(SimpleStringProperty queue) {
+        this.queue = queue;
+    }
+
+    public SimpleBooleanProperty getMonth() {
+        return month;
+    }
+
+    public void setMonth(SimpleBooleanProperty month) {
+        this.month = month;
+    }
+
+    public SimpleIntegerProperty getNodes() {
+        return nodes;
+    }
+
+    public void setNodes(SimpleIntegerProperty nodes) {
+        this.nodes = nodes;
+    }
+
+    public SimpleIntegerProperty getThreads() {
+        return threads;
+    }
+
+    public void setThreads(SimpleIntegerProperty threads) {
+        this.threads = threads;
+    }
+
+    public SimpleStringProperty getInputFile() {
+        return inputFile;
+    }
+
+    public void setInputFile(SimpleStringProperty inputFile) {
+        this.inputFile = inputFile;
+    }
+
+    public SimpleStringProperty getScriptVal() {
+        return scriptVal;
+    }
+
+    public void setScriptVal(SimpleStringProperty scriptVal) {
+        this.scriptVal = scriptVal;
+    }
+
+    public String getJobID() {
+        return jobID;
+    }
+
+    public void setJobID(String jobID) {
+        this.jobID = jobID;
+    }
+
+    @Override
+    public String toString() {
+        return "#PBS -l select=" + nodes.getValue() + ":ncpus=" + threads.getValue() + "\n"
+                + "#PBS -q " + queue.getValue() + (month.getValue() ? "-1m" : "") + "\n"
+                + "#PBS -N " + name.getValue() + "\n";
+    }
+
+    public void submit(String script) throws InterruptedException {
+        submitThread = new Thread(() -> {
+            if (uploadThread != null && uploadThread.isAlive()) {
+                try {
+                    uploadThread.join();
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(Script.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            submitThread = new Thread(new SSHTask(this, "/bin/echo \"" + script + "\" > " + SSHWrapper.GetRemoteHomeFolder() + "/ABG/jobs/" + name.getValue()));
+            submitThread.setDaemon(true);
+            submitThread.start();
+        });
+        submitThread.setDaemon(true);
+        submitThread.start();
+        qsubThread = new Thread(() -> {
+            try {
+                if (submitThread.isAlive()) {
+                    submitThread.join();
+                }
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Script.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            qsubThread = new Thread(new SSHTask(this, "/opt/pbs/default/bin/qsub " + SSHWrapper.GetRemoteHomeFolder() + "/ABG/jobs/" + name.getValue()));
+            qsubThread.setDaemon(true);
+            qsubThread.start();
+        });
+        qsubThread.setDaemon(true);
+        qsubThread.start();
+    }
+
+    public void uploadInputFile(String path) {
+        String temp[] = path.split("/");
+        uploadThread = new Thread(new SSHTask(this, path, SSHWrapper.GetRemoteHomeFolder() + SSHWrapper.GetABGFolder() + "datasets/" + temp[temp.length - 1], SSHTask.TaskType.UploadFile));
+        uploadThread.setDaemon(true);
+        uploadThread.start();
+    }
+
+    @Override
+    public void sshResponse(String strCommand, String strResponse) {
+        System.out.println(strResponse + "!" + strCommand);
+        if (strCommand.contains("qsub")) {
+            jobID = strResponse.split("\\.")[0];
+        }
+    }
+
+    @Override
+    public void FileDownloadResponse(String strFilePath, Boolean bStatus) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void FileUploadResponse(String strFilePath, Boolean bStatus) {
+        System.out.println("File Uploaded!");
+    }
+
+    @Override
+    public void GotFilesList(String strDirecory, Vector<ChannelSftp.LsEntry> lstItems) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public char getType() {
+        return type;
+    }
+
+    public void setType(char type) {
+        this.type = type;
+    }
+
+
+    
+    
+
+}
+package Models;
+
+import com.jcraft.jsch.ChannelSftp;
+import java.util.Vector;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javafx.concurrent.Task;
+
+public class SftpTask extends Task {
+
+    public enum TaskType {
+        ListFile,
+        Unknow
+    }
+    private SSHListener mListener;
+    private String mSourceFile;
+    private String mDestFile;
+    private TaskType mType;
+
+    public SftpTask(Object context, String strSourceFile, TaskType pTaskType) {
+        mType = pTaskType;
+        if (context instanceof SSHListener) {
+            mListener = (SSHListener) context;
+        } else {
+            throw new RuntimeException(context.toString()
+                    + " must implement SSHListener");
+        }
+        mSourceFile = strSourceFile;
+    }
+
+    @Override
+    protected Vector<ChannelSftp.LsEntry> call() throws Exception {
+        try {
+            if (mType == TaskType.ListFile) {
+                return SSHWrapper.ListFile(mSourceFile);
+            }
+        } catch (Exception e) {
+            return null;
+        }
+        return null;
+    }
+
+    @Override
+    protected void done() {
+        if (mType == TaskType.ListFile) {
+            try {
+                mListener.GotFilesList(mSourceFile, (Vector<ChannelSftp.LsEntry>) this.get());
+            } catch (InterruptedException | ExecutionException ex) {
+                Logger.getLogger(SftpTask.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+
+}
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package Models;
+
+import Controllers.WizardController;
+
+/**
+ *
+ * @author OBAI
+ */
+public abstract class WizardView {
+
+    public  WizardController wizard;
+
+    public void setWizard(WizardController wizard) {
+        this.wizard = wizard;
+    }
+}
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TreeView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane id="AnchorPane" maxHeight="500.0" maxWidth="400.0" minHeight="500.0" minWidth="400.0" prefHeight="500.0" prefWidth="400.0" stylesheets="@../Resources/bootstrap3.css" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controllers.DataSelectionViewController">
+   <children>
+      <BorderPane layoutX="10.0" layoutY="10.0" maxHeight="600.0" maxWidth="400.0" minHeight="500.0" minWidth="400.0" prefHeight="500.0" prefWidth="400.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <top>
+            <Pane id="header" maxHeight="70.0" maxWidth="400.0" minHeight="70.0" minWidth="400.0" prefHeight="70.0" prefWidth="400.0">
+               <BorderPane.margin>
+                  <Insets />
+               </BorderPane.margin>
+               <children>
+                  <Label text="Test Data" textFill="WHITE">
+                     <padding>
+                        <Insets left="10.0" top="30.0" />
+                     </padding>
+                     <font>
+                        <Font size="17.0" />
+                     </font>
+                  </Label>
+               </children>
+            </Pane>
+         </top>
+         <bottom>
+            <ButtonBar id="header" maxHeight="50.0" maxWidth="400.0" minHeight="50.0" minWidth="400.0" prefHeight="50.0" prefWidth="400.0" BorderPane.alignment="CENTER">
+               <buttons>
+                  <ProgressIndicator fx:id="loadingIndicator" maxHeight="35.0" minHeight="35.0" prefHeight="35.0" visible="false" />
+                  <Button fx:id="next" maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#next" text="Next" translateX="-10.0" />
+               </buttons>
+            </ButtonBar>
+         </bottom>
+         <center>
+            <TabPane maxHeight="400.0" maxWidth="400.0" minHeight="300.0" minWidth="400.0" prefHeight="300.0" prefWidth="400.0" tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
+              <tabs>
+                <Tab text="Local">
+                  <content>
+                    <AnchorPane>
+                           <children>
+                              <TreeView fx:id="localBrowser" layoutX="10.0" layoutY="10.0" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                           </children>
+                        </AnchorPane>
+                  </content>
+                </Tab>
+                <Tab text=" Aziz  ">
+                  <content>
+                    <AnchorPane>
+                           <children>
+                              <TreeView fx:id="azizBrowser" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                           </children>
+                        </AnchorPane>
+                  </content>
+                </Tab>
+              </tabs>
+            </TabPane>
+         </center>
+      </BorderPane>
+   </children>
+</AnchorPane>
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.SpinnerValueFactory.IntegerSpinnerValueFactory?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane id="AnchorPane" maxHeight="600.0" maxWidth="400.0" minHeight="600.0" minWidth="400.0" pickOnBounds="false" prefHeight="600.0" prefWidth="400.0" stylesheets="@../Resources/bootstrap3.css" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controllers.FastMotifMatchingViewController">
+   <children>
+      <BorderPane layoutX="10.0" layoutY="10.0" maxHeight="600.0" maxWidth="400.0" minHeight="600.0" minWidth="400.0" prefHeight="600.0" prefWidth="400.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <center>
+            <StackPane pickOnBounds="false">
+               <children>
+                  <VBox maxHeight="480.0" maxWidth="380.0" minHeight="480.0" minWidth="380.0" prefHeight="480.0" prefWidth="380.0" StackPane.alignment="CENTER_LEFT">
+                     <children>
+                        <VBox maxHeight="80.0" minHeight="80.0" prefHeight="80.0" prefWidth="380.0">
+                           <children>
+                              <Label text="Output Options">
+                                 <VBox.margin>
+                                    <Insets left="9.0" top="10.0" />
+                                 </VBox.margin>
+                                 <font>
+                                    <Font size="15.0" />
+                                 </font>
+                              </Label>
+                              <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0" VBox.vgrow="NEVER">
+                                 <VBox.margin>
+                                    <Insets left="10.0" top="5.0" />
+                                 </VBox.margin>
+                                 <children>
+                                    <Label text="Name">
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                    </Label>
+                                    <TextField fx:id="outputName" maxHeight="25.0" maxWidth="300.0" minHeight="25.0" minWidth="300.0" prefHeight="25.0" prefWidth="300.0">
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <HBox.margin>
+                                          <Insets left="10.0" />
+                                       </HBox.margin>
+                                    </TextField>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+                        <Separator prefHeight="13.0" prefWidth="473.0">
+                           <VBox.margin>
+                              <Insets left="5.0" />
+                           </VBox.margin>
+                        </Separator>
+                        <Label text="Motif Options">
+                           <font>
+                              <Font size="15.0" />
+                           </font>
+                           <VBox.margin>
+                              <Insets left="10.0" top="5.0" />
+                           </VBox.margin>
+                        </Label>
+                        <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="370.0" minHeight="35.0" minWidth="370.0" prefHeight="35.0" prefWidth="370.0">
+                           <children>
+                              <Label prefHeight="19.0" prefWidth="178.0" text="Sequence Length">
+                                 <font>
+                                    <Font size="15.0" />
+                                 </font>
+                              </Label>
+                              <Spinner fx:id="sequenceLength" maxHeight="25.0" maxWidth="60.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="60.0">
+                                 <valueFactory>
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="105" max="1000" min="8" />
+                                 </valueFactory>
+                                 <HBox.margin>
+                                    <Insets left="115.0" />
+                                 </HBox.margin>
+                              </Spinner>
+                           </children>
+                           <VBox.margin>
+                              <Insets left="10.0" top="10.0" />
+                           </VBox.margin>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="370.0" minHeight="35.0" minWidth="370.0" prefHeight="35.0" prefWidth="370.0">
+                           <children>
+                              <Label prefHeight="19.0" prefWidth="300.0" text="Number of Sequences">
+                                 <font>
+                                    <Font size="15.0" />
+                                 </font>
+                              </Label>
+                              <Spinner fx:id="sequenceNumber" maxHeight="25.0" maxWidth="60.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="60.0">
+                                 <valueFactory>
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="18" max="1000" min="1" />
+                                 </valueFactory>
+                                 <HBox.margin>
+                                    <Insets left="-5.0" />
+                                 </HBox.margin>
+                              </Spinner>
+                           </children>
+                           <VBox.margin>
+                              <Insets left="10.0" top="10.0" />
+                           </VBox.margin>
+                        </HBox>
+                     </children>
+                  </VBox>
+               </children>
+               <BorderPane.margin>
+                  <Insets left="5.0" />
+               </BorderPane.margin>
+            </StackPane>
+         </center>
+         <top>
+            <Pane id="header" maxHeight="70.0" maxWidth="400.0" minHeight="70.0" minWidth="400.0" prefHeight="70.0" prefWidth="400.0">
+               <BorderPane.margin>
+                  <Insets />
+               </BorderPane.margin>
+               <children>
+                  <Label text="Fast Motif Discovery" textFill="WHITE">
+                     <padding>
+                        <Insets left="10.0" top="30.0" />
+                     </padding>
+                     <font>
+                        <Font size="17.0" />
+                     </font>
+                  </Label>
+               </children>
+            </Pane>
+         </top>
+         <bottom>
+            <ButtonBar id="header" maxHeight="50.0" maxWidth="400.0" minHeight="50.0" minWidth="400.0" prefHeight="50.0" prefWidth="400.0" BorderPane.alignment="CENTER">
+               <buttons>
+                  <Button fx:id="back" maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#back" text="Back" translateX="-240.0" />
+                  <Button fx:id="next" maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#next" text="Next" translateX="-10.0" />
+               </buttons>
+            </ButtonBar>
+         </bottom>
+      </BorderPane>
+   </children>
+</AnchorPane>
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ContextMenu?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.cell.PropertyValueFactory?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane maxHeight="700.0" maxWidth="1200.0" minHeight="600.0" minWidth="800.0" prefHeight="700.0" prefWidth="1200.0" stylesheets="@../Resources/bootstrap3.css" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <VBox layoutX="10.0" layoutY="10.0" maxHeight="700.0" maxWidth="1200.0" minHeight="600.0" minWidth="800.0" prefHeight="700.0" prefWidth="1200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <children>
+                <MenuBar id="header" VBox.vgrow="NEVER">
+                    <menus>
+                        <Menu mnemonicParsing="false" text="File">
+                            <items>
+                                <MenuItem mnemonicParsing="false" onAction="#close" text="Close" />
+                            </items>
+                        </Menu>
+                        <Menu mnemonicParsing="false" text="Edit">
+                            <items>
+                                <MenuItem fx:id="addMenuItem" mnemonicParsing="false" onAction="#addJob" text="Add" disable="true" />
+                                <MenuItem fx:id="removeMenuItem" mnemonicParsing="false" onAction="#removeJob" text="Delete" disable="true"/>
+                            </items>
+                        </Menu>
+                    </menus>
+                </MenuBar>
+                <TableView id="jobsTable" fx:id="jobsTable" prefHeight="678.0" prefWidth="1200.0" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn id="Id" editable="false" prefWidth="66.0" text="ID">
+                            <cellValueFactory>
+                                <PropertyValueFactory property="Id" />
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn id="Name" editable="false" prefWidth="93.0" text="Name">
+                         <cellValueFactory>
+                                <PropertyValueFactory property="Name" />
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn id="DateCreated" editable="false" prefWidth="163.0" text="Date Created">
+                             <cellValueFactory>
+                                <PropertyValueFactory property="DateCreated" />
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn id="Status" editable="false" prefWidth="227.0" text="Status">
+                             <cellValueFactory>
+                                <PropertyValueFactory property="Status" />
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn id="CpuTime" editable="false" prefWidth="145.0" text="CPU Time">
+                             <cellValueFactory>
+                                <PropertyValueFactory property="CpuTime" />
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn id="WallTime" editable="false" prefWidth="149.0" text="Wall Time">
+                             <cellValueFactory>
+                                <PropertyValueFactory property="WallTime" />
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn id="CPUs" editable="false" minWidth="0.0" prefWidth="126.0" text="#CPUs">
+                             <cellValueFactory>
+                                <PropertyValueFactory property="CPUs" />
+                            </cellValueFactory>
+                        </TableColumn>
+                        <TableColumn id="Nodes" editable="false" prefWidth="250.0" text="#Nodes">
+                             <cellValueFactory>
+                                <PropertyValueFactory property="Nodes" />
+                            </cellValueFactory>
+                        </TableColumn>
+                    </columns>
+               <contextMenu>
+                  <ContextMenu fx:id="contextMenu">
+                    <items>
+                      <MenuItem mnemonicParsing="false" onAction="#showScript" text="Show Script" />
+                    </items>
+                  </ContextMenu>
+               </contextMenu>
+                </TableView>
+                <Pane fx:id="pane" maxHeight="40.0" maxWidth="1200.0" minHeight="40.0" minWidth="800.0" prefHeight="40.0" prefWidth="1200.0" VBox.vgrow="NEVER">
+                    <VBox.margin>
+                        <Insets />
+                    </VBox.margin>
+                    <children>
+                        <Button fx:id="Add" disable="true" layoutX="25.0" layoutY="5.0" maxHeight="30.0" maxWidth="100.0" minHeight="30.0" minWidth="100.0" mnemonicParsing="false" onAction="#newJob" prefHeight="30.0" prefWidth="100.0" text="Add" />
+                        <Button fx:id="delete" disable="true" layoutX="152.0" layoutY="5.0" maxHeight="30.0" maxWidth="100.0" minHeight="30.0" minWidth="100.0" mnemonicParsing="false" onAction="#deleteJob" prefHeight="30.0" prefWidth="100.0" text="Delete" textAlignment="CENTER">
+                            <opaqueInsets>
+                                <Insets />
+                            </opaqueInsets>
+                        </Button>
+                        <ProgressIndicator fx:id="progressIndicator" depthTest="DISABLE" layoutX="1170.0" layoutY="8.0" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" prefHeight="25.0" prefWidth="25.0" snapToPixel="false" visible="false" />
+                    </children>
+                </Pane>
+            </children>
+        </VBox>
+    </children>
+</AnchorPane>
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.String?>
+<?import javafx.collections.FXCollections?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.SpinnerValueFactory.IntegerSpinnerValueFactory?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane id="AnchorPane" maxHeight="600.0" maxWidth="400.0" minHeight="600.0" minWidth="400.0" pickOnBounds="false" prefHeight="600.0" prefWidth="400.0" stylesheets="@../Resources/bootstrap3.css" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controllers.MotifDiscoveryViewController">
+    <children>
+        <BorderPane layoutX="10.0" layoutY="10.0" maxHeight="600.0" maxWidth="400.0" minHeight="600.0" minWidth="400.0" prefHeight="600.0" prefWidth="400.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <center>
+                <StackPane pickOnBounds="false">
+                    <children>
+                        <VBox maxHeight="480.0" maxWidth="380.0" minHeight="480.0" minWidth="380.0" prefHeight="480.0" prefWidth="380.0" StackPane.alignment="CENTER_LEFT">
+                            <children>
+                                <VBox prefHeight="118.0" prefWidth="380.0">
+                                    <children>
+                                        <Label text="Output Options">
+                                            <VBox.margin>
+                                                <Insets left="9.0" top="10.0" />
+                                            </VBox.margin>
+                                            <font>
+                                                <Font size="15.0" />
+                                            </font>
+                                        </Label>
+                                        <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0" VBox.vgrow="NEVER">
+                                            <VBox.margin>
+                                                <Insets left="10.0" top="5.0" />
+                                            </VBox.margin>
+                                            <children>
+                                                <Label text="Name">
+                                                    <font>
+                                                        <Font size="15.0" />
+                                                    </font>
+                                                </Label>
+                                                <TextField fx:id="outputName" maxHeight="25.0" maxWidth="200.0" minHeight="25.0" minWidth="200.0" prefHeight="25.0" prefWidth="200.0">
+                                                    <font>
+                                                        <Font size="15.0" />
+                                                    </font>
+                                                    <HBox.margin>
+                                                        <Insets left="10.0" />
+                                                    </HBox.margin>
+                                                </TextField>
+                                                <CheckBox fx:id="overWrite" maxHeight="25.0" minHeight="25.0" mnemonicParsing="false" prefHeight="25.0" text="Overwrite">
+                                                    <font>
+                                                        <Font size="15.0" />
+                                                    </font>
+                                                    <HBox.margin>
+                                                        <Insets left="5.0" />
+                                                    </HBox.margin>
+                                                </CheckBox>
+                                            </children>
+                                        </HBox>
+                                        <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0">
+                                            <VBox.margin>
+                                                <Insets left="10.0" />
+                                            </VBox.margin>
+                                 <children>
+                                    <CheckBox fx:id="textOut" mnemonicParsing="false" text="Text Based Output">
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <HBox.margin>
+                                          <Insets left="53.0" />
+                                       </HBox.margin>
+                                    </CheckBox>
+                                 </children>
+                                        </HBox>
+                                        <Separator prefHeight="13.0" prefWidth="466.0">
+                                 <VBox.margin>
+                                    <Insets left="5.0" />
+                                 </VBox.margin></Separator>
+                                    </children>
+                                </VBox>
+                                <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0">
+                                    <children>
+                                        <Label text="Input Type">
+                                            <font>
+                                                <Font size="15.0" />
+                                            </font>
+                                        </Label>
+                                        <RadioButton fx:id="DNA" mnemonicParsing="false" selected="true" text="DNA">
+                                            <font>
+                                                <Font size="15.0" />
+                                            </font>
+                                            <HBox.margin>
+                                                <Insets left="10.0" />
+                                            </HBox.margin>
+                                            <toggleGroup>
+                                                <ToggleGroup fx:id="inputType" />
+                                            </toggleGroup>
+                                        </RadioButton>
+                                        <RadioButton fx:id="RNA" mnemonicParsing="false" text="RNA" toggleGroup="$inputType">
+                                            <font>
+                                                <Font size="15.0" />
+                                            </font>
+                                            <HBox.margin>
+                                                <Insets left="37.0" />
+                                            </HBox.margin>
+                                        </RadioButton>
+                                        <RadioButton fx:id="Protein" mnemonicParsing="false" text="Protein" toggleGroup="$inputType">
+                                            <font>
+                                                <Font size="15.0" />
+                                            </font>
+                                            <HBox.margin>
+                                                <Insets left="21.0" />
+                                            </HBox.margin>
+                                        </RadioButton>
+                                    </children>
+                                    <VBox.margin>
+                                        <Insets left="10.0" />
+                                    </VBox.margin>
+                                </HBox>
+                                <Separator prefHeight="13.0" prefWidth="473.0">
+                           <VBox.margin>
+                              <Insets left="5.0" />
+                           </VBox.margin></Separator>
+                                <Label text="Motif Options">
+                                    <font>
+                                        <Font size="15.0" />
+                                    </font>
+                                    <VBox.margin>
+                                        <Insets left="10.0" top="5.0" />
+                                    </VBox.margin>
+                                </Label>
+                                <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0">
+                                    <children>
+                                        <Label text="Occurrence">
+                                            <font>
+                                                <Font size="15.0" />
+                                            </font>
+                                        </Label>
+                                        <ChoiceBox fx:id="occurrence" maxHeight="25.0" minHeight="25.0" prefHeight="25.0" prefWidth="150.0" value="Zero Or One">
+                                            <opaqueInsets>
+                                                <Insets />
+                                            </opaqueInsets>
+                                            <HBox.margin>
+                                                <Insets left="20.0" />
+                                            </HBox.margin>
+                                            <items>
+                                                <FXCollections fx:factory="observableArrayList">
+                                                    <String fx:value="Zero Or One" />
+                                                    <String fx:value="Once" />
+                                                    <String fx:value="Any" />
+                                                </FXCollections>
+                                            </items>
+                                        </ChoiceBox>
+                                    </children>
+                                    <VBox.margin>
+                                        <Insets left="10.0" />
+                                    </VBox.margin>
+                                </HBox>
+                                <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0">
+                                    <children>
+                                        <Label text="Number of Motifs">
+                                            <font>
+                                                <Font size="15.0" />
+                                            </font>
+                                        </Label>
+                                        <Spinner fx:id="motifNumber" maxHeight="25.0" maxWidth="60.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="60.0">
+                                            <valueFactory>
+                                                <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="1" max="1000" min="1" />
+                                            </valueFactory>                               
+                                            <HBox.margin>
+                                                <Insets left="112.0" />
+                                            </HBox.margin>
+                                        </Spinner>
+                                    </children>
+                                    <VBox.margin>
+                                        <Insets left="10.0" />
+                                    </VBox.margin>
+                                </HBox>
+                                <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="368.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="368.0">
+                                    <children>
+                                        <Label text="Number of Motif Sites">
+                                            <font>
+                                                <Font size="15.0" />
+                                            </font>
+                                        </Label>
+                              <Spinner fx:id="minMotifSites" maxHeight="25.0" maxWidth="60.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="60.0">
+                                 <valueFactory>
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="2" max="1000" min="2" />
+                                 </valueFactory>
+                                 <HBox.margin>
+                                    <Insets left="10.0" />
+                                 </HBox.margin>
+                              </Spinner>
+                              <Spinner fx:id="maxMotifSites" maxHeight="25.0" maxWidth="60.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="60.0">
+                                 <valueFactory>
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="2" max="1000" min="2" />
+                                 </valueFactory>
+                                 <HBox.margin>
+                                    <Insets left="10.0" />
+                                 </HBox.margin>
+                              </Spinner>
+                                        <CheckBox fx:id="motifExact" mnemonicParsing="false" text="Exact">
+                                            <HBox.margin>
+                                                <Insets left="10.0" />
+                                            </HBox.margin>
+                                            <font>
+                                                <Font size="15.0" />
+                                            </font>
+                                        </CheckBox>
+                                    </children>
+                                    <VBox.margin>
+                                        <Insets left="10.0" />
+                                    </VBox.margin>
+                                </HBox>
+                                <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0">
+                                    <children>
+                                        <Label text="Bias">
+                                            <font>
+                                                <Font size="15.0" />
+                                            </font>
+                                        </Label>
+                                        <Slider fx:id="bias" blockIncrement="0.05" majorTickUnit="0.1" max="1.0" maxWidth="300.0" minWidth="300.0" minorTickCount="1" prefWidth="300.0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="0.8">
+                                            <HBox.margin>
+                                                <Insets left="20.0" />
+                                            </HBox.margin>
+                                            <padding>
+                                                <Insets top="25.0" />
+                                            </padding>
+                                        </Slider>
+                                    </children>
+                                    <VBox.margin>
+                                        <Insets left="10.0" />
+                                    </VBox.margin>
+                                </HBox>
+                                <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="370.0" minHeight="35.0" minWidth="370.0" prefHeight="35.0" prefWidth="370.0">
+                                    <children>
+                                        <Label prefHeight="19.0" prefWidth="105.0" text="Length">
+                                            <font>
+                                                <Font size="15.0" />
+                                            </font>
+                                        </Label>
+                              <Spinner fx:id="motifLength" maxHeight="25.0" maxWidth="60.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="60.0">
+                                 <valueFactory>
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="8" max="1000" min="8" />
+                                 </valueFactory>
+                                 <HBox.margin>
+                                    <Insets left="61.0" />
+                                 </HBox.margin>
+                              </Spinner>
+                              <Spinner fx:id="motifLengthMin" maxHeight="25.0" maxWidth="60.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="60.0">
+                                 <valueFactory>
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="8" max="1000" min="8" />
+                                 </valueFactory>
+                                 <HBox.margin>
+                                    <Insets left="10.0" />
+                                 </HBox.margin>
+                              </Spinner>
+                              <Spinner fx:id="motifLengthMax" maxHeight="25.0" maxWidth="69.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="69.0">
+                                 <valueFactory>
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="8" max="50" min="8" />
+                                 </valueFactory>
+                                 <HBox.margin>
+                                    <Insets left="10.0" />
+                                 </HBox.margin>
+                              </Spinner>
+                                    </children>
+                                    <VBox.margin>
+                                        <Insets left="10.0" top="10.0" />
+                                    </VBox.margin>
+                                </HBox>
+                        <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                           <children>
+                              <Label text="Gap Opening Cost">
+                                 <font>
+                                    <Font size="15.0" />
+                                 </font>
+                                 <HBox.margin>
+                                    <Insets />
+                                 </HBox.margin>
+                              </Label>
+                              <Spinner fx:id="gapOpen" editable="true" maxHeight="25.0" maxWidth="60.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="60.0">
+                                 <valueFactory>
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="11" max="1000" min="11" />
+                                 </valueFactory>
+                                 <HBox.margin>
+                                    <Insets left="36.0" />
+                                 </HBox.margin>
+                              </Spinner>
+                           </children>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0">
+                           <children>
+                              <Label text="Gap Extension Cost">
+                                 <font>
+                                    <Font size="15.0" />
+                                 </font>
+                                 <HBox.margin>
+                                    <Insets />
+                                 </HBox.margin>
+                              </Label>
+                              <Spinner fx:id="gapExtend" maxHeight="25.0" maxWidth="60.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="60.0">
+                                 <valueFactory>
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="11" max="1000" min="11" />
+                                 </valueFactory>
+                                 <HBox.margin>
+                                    <Insets left="27.0" />
+                                 </HBox.margin>
+                              </Spinner>
+                           </children>
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0">
+                           <children>
+                              <CheckBox fx:id="trimming" mnemonicParsing="false" text="No Trimming">
+                                 <font>
+                                    <Font size="15.0" />
+                                 </font>
+                              </CheckBox>
+                              <CheckBox fx:id="endGaps" mnemonicParsing="false" text="No End Gaps">
+                                 <font>
+                                    <Font size="15.0" />
+                                 </font>
+                                 <HBox.margin>
+                                    <Insets left="68.0" />
+                                 </HBox.margin>
+                              </CheckBox>
+                           </children>
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </HBox>
+                            </children>
+                        </VBox>
+                    </children>
+                    <BorderPane.margin>
+                        <Insets left="5.0" />
+                    </BorderPane.margin>
+                </StackPane>
+            </center>
+            <top>
+                <Pane id="header" maxHeight="70.0" maxWidth="400.0" minHeight="70.0" minWidth="400.0" prefHeight="70.0" prefWidth="400.0">
+                    <BorderPane.margin>
+                        <Insets />
+                    </BorderPane.margin>
+                    <children>
+                        <Label text="Motif Discovery" textFill="WHITE">
+                            <padding>
+                                <Insets left="10.0" top="30.0" />
+                            </padding>
+                            <font>
+                                <Font size="17.0" />
+                            </font>
+                        </Label>
+                    </children>
+                </Pane>
+            </top>
+            <bottom>
+                <ButtonBar id="header" maxHeight="50.0" maxWidth="400.0" minHeight="50.0" minWidth="400.0" prefHeight="50.0" prefWidth="400.0" BorderPane.alignment="CENTER">
+                    <buttons>
+                        <Button fx:id="back" maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#back" text="Back" translateX="-240.0" />
+                        <Button fx:id="next" maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#next" text="Next" translateX="-10.0" />
+                    </buttons>
+                </ButtonBar>
+            </bottom>
+        </BorderPane>
+    </children>
+</AnchorPane>
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.String?>
+<?import javafx.collections.FXCollections?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.SpinnerValueFactory.IntegerSpinnerValueFactory?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane id="AnchorPane" maxHeight="600.0" maxWidth="400.0" minHeight="600.0" minWidth="400.0" pickOnBounds="false" prefHeight="600.0" prefWidth="400.0" stylesheets="@../Resources/bootstrap3.css" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controllers.MotifMatchingViewController">
+   <children>
+      <BorderPane layoutX="10.0" layoutY="10.0" maxHeight="600.0" maxWidth="400.0" minHeight="600.0" minWidth="400.0" prefHeight="600.0" prefWidth="400.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <center>
+            <StackPane pickOnBounds="false">
+               <children>
+                  <VBox maxHeight="480.0" maxWidth="380.0" minHeight="480.0" minWidth="380.0" prefHeight="480.0" prefWidth="380.0" StackPane.alignment="CENTER_LEFT">
+                     <children>
+                        <VBox prefHeight="118.0" prefWidth="380.0">
+                           <children>
+                              <Label text="Output Options">
+                                 <VBox.margin>
+                                    <Insets left="9.0" top="10.0" />
+                                 </VBox.margin>
+                                 <font>
+                                    <Font size="15.0" />
+                                 </font>
+                              </Label>
+                              <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0" VBox.vgrow="NEVER">
+                                 <VBox.margin>
+                                    <Insets left="10.0" top="5.0" />
+                                 </VBox.margin>
+                                 <children>
+                                    <Label text="Name">
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                    </Label>
+                                    <TextField fx:id="outputName" maxHeight="25.0" maxWidth="200.0" minHeight="25.0" minWidth="200.0" prefHeight="25.0" prefWidth="200.0">
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <HBox.margin>
+                                          <Insets left="10.0" />
+                                       </HBox.margin>
+                                    </TextField>
+                                    <CheckBox fx:id="overWrite" maxHeight="25.0" minHeight="25.0" mnemonicParsing="false" prefHeight="25.0" text="Overwrite">
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <HBox.margin>
+                                          <Insets left="5.0" />
+                                       </HBox.margin>
+                                    </CheckBox>
+                                 </children>
+                              </HBox>
+                              <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0">
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
+                                 <children>
+                                    <CheckBox fx:id="textOut" mnemonicParsing="false" text="Text Based Output">
+                                       <font>
+                                          <Font size="15.0" />
+                                       </font>
+                                       <HBox.margin>
+                                          <Insets left="53.0" />
+                                       </HBox.margin>
+                                    </CheckBox>
+                                 </children>
+                              </HBox>
+                              <Separator prefHeight="13.0" prefWidth="466.0">
+                                 <VBox.margin>
+                                    <Insets left="5.0" />
+                                 </VBox.margin>
+                              </Separator>
+                           </children>
+                        </VBox>
+                        <HBox alignment="CENTER_LEFT" maxHeight="60.0" maxWidth="360.0" minHeight="60.0" minWidth="360.0" prefHeight="60.0" prefWidth="360.0">
+                           <children>
+                              <Label text="Data Base ">
+                                 <font>
+                                    <Font size="15.0" />
+                                 </font>
+                                 <HBox.margin>
+                                    <Insets top="-40.0" />
+                                 </HBox.margin>
+                              </Label>
+                              <VBox>
+                                 <children>
+                                    <ComboBox fx:id="category" maxHeight="25.0" maxWidth="250.0" minHeight="25.0" minWidth="270.0" prefHeight="25.0" prefWidth="270.0" promptText="Category">
+                                       <VBox.margin>
+                                          <Insets />
+                                       </VBox.margin>
+                                    </ComboBox>
+                                    <ComboBox fx:id="database" maxHeight="25.0" maxWidth="270.0" minHeight="25.0" minWidth="270.0" prefHeight="25.0" prefWidth="270.0" promptText="Database">
+                                       <VBox.margin>
+                                          <Insets top="10.0" />
+                                       </VBox.margin>
+                                    </ComboBox>
+                                 </children>
+                                 <HBox.margin>
+                                    <Insets left="10.0" />
+                                 </HBox.margin>
+                              </VBox>
+                           </children>
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </HBox>
+                        <Separator prefHeight="13.0" prefWidth="473.0">
+                           <VBox.margin>
+                              <Insets left="5.0" />
+                           </VBox.margin>
+                        </Separator>
+                        <Label text="Scoring Options">
+                           <font>
+                              <Font size="15.0" />
+                           </font>
+                           <VBox.margin>
+                              <Insets left="10.0" top="5.0" />
+                           </VBox.margin>
+                        </Label>
+                        <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0">
+                           <children>
+                              <Label text="Comparison Function">
+                                 <font>
+                                    <Font size="15.0" />
+                                 </font>
+                              </Label>
+                              <ChoiceBox fx:id="comparison" maxHeight="25.0" maxWidth="200.0" minHeight="25.0" minWidth="200.0" prefHeight="25.0" prefWidth="200.0" value="Zero Or One">
+                                 <opaqueInsets>
+                                    <Insets />
+                                 </opaqueInsets>
+                                 <HBox.margin>
+                                    <Insets left="10.0" />
+                                 </HBox.margin>
+                                 <items>
+                                    <FXCollections fx:factory="observableArrayList">
+                                       <String fx:value="Pearson correlation coefficient" />
+                                       <String fx:value="OnceEuclidian distance" />
+                                       <String fx:value="Sandelin-Wasserman function" />
+                                    </FXCollections>
+                                 </items>
+                              </ChoiceBox>
+                           </children>
+                           <VBox.margin>
+                              <Insets left="10.0" top="10.0" />
+                           </VBox.margin>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0">
+                           <children>
+                              <ChoiceBox fx:id="thresh" maxHeight="25.0" maxWidth="50.0" minHeight="25.0" minWidth="50.0" prefHeight="25.0" prefWidth="50.0" value="Zero Or One">
+                                 <opaqueInsets>
+                                    <Insets />
+                                 </opaqueInsets>
+                                 <items>
+                                    <FXCollections fx:factory="observableArrayList">
+                                       <String fx:value="Q" />
+                                       <String fx:value="E" />
+                                    </FXCollections>
+                                 </items>
+                              </ChoiceBox>
+                              <Slider fx:id="slider" maxWidth="300.0" minWidth="300.0" prefWidth="300.0" showTickLabels="true" showTickMarks="true" snapToTicks="true">
+                                 <HBox.margin>
+                                    <Insets left="20.0" />
+                                 </HBox.margin>
+                                 <padding>
+                                    <Insets top="10.0" />
+                                 </padding>
+                              </Slider>
+                           </children>
+                           <VBox.margin>
+                              <Insets left="10.0" top="10.0" />
+                           </VBox.margin>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0">
+                           <VBox.margin>
+                              <Insets left="10.0" top="20.0" />
+                           </VBox.margin>
+                           <children>
+                              <Label text="Minimum Overlap">
+                                 <font>
+                                    <Font size="15.0" />
+                                 </font>
+                                 <HBox.margin>
+                                    <Insets />
+                                 </HBox.margin>
+                              </Label>
+                              <Spinner fx:id="overlap" editable="true" maxHeight="25.0" maxWidth="60.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="60.0">
+                                 <valueFactory>
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="1" max="1000" min="1" />
+                                 </valueFactory>
+                                 <HBox.margin>
+                                    <Insets left="36.0" />
+                                 </HBox.margin>
+                              </Spinner>
+                           </children>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" maxHeight="35.0" maxWidth="360.0" minHeight="35.0" minWidth="360.0" prefHeight="35.0" prefWidth="360.0">
+                           <children>
+                              <CheckBox fx:id="completeRows" mnemonicParsing="false" text="Complete Rows Only">
+                                 <font>
+                                    <Font size="15.0" />
+                                 </font>
+                                 <HBox.margin>
+                                    <Insets />
+                                 </HBox.margin>
+                              </CheckBox>
+                           </children>
+                           <VBox.margin>
+                              <Insets left="10.0" top="10.0" />
+                           </VBox.margin>
+                        </HBox>
+                     </children>
+                  </VBox>
+               </children>
+               <BorderPane.margin>
+                  <Insets left="5.0" />
+               </BorderPane.margin>
+            </StackPane>
+         </center>
+         <top>
+            <Pane id="header" maxHeight="70.0" maxWidth="400.0" minHeight="70.0" minWidth="400.0" prefHeight="70.0" prefWidth="400.0">
+               <BorderPane.margin>
+                  <Insets />
+               </BorderPane.margin>
+               <children>
+                  <Label text="Motif Matching" textFill="WHITE">
+                     <padding>
+                        <Insets left="10.0" top="30.0" />
+                     </padding>
+                     <font>
+                        <Font size="17.0" />
+                     </font>
+                  </Label>
+               </children>
+            </Pane>
+         </top>
+         <bottom>
+            <ButtonBar id="header" maxHeight="50.0" maxWidth="400.0" minHeight="50.0" minWidth="400.0" prefHeight="50.0" prefWidth="400.0" BorderPane.alignment="CENTER">
+               <buttons>
+                  <Button fx:id="back" maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#back" text="Back" translateX="-240.0" />
+                  <Button fx:id="next" maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#next" text="Next" translateX="-10.0" />
+               </buttons>
+            </ButtonBar>
+         </bottom>
+      </BorderPane>
+   </children>
+</AnchorPane>
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.SpinnerValueFactory.IntegerSpinnerValueFactory?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Rectangle?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane id="AnchorPane" maxHeight="500.0" maxWidth="400.0" minHeight="500.0" minWidth="400.0" prefHeight="500.0" prefWidth="400.0" stylesheets="@../Resources/bootstrap3.css" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controllers.PBSViewController">
+    <children>
+        <BorderPane layoutX="10.0" layoutY="10.0" maxHeight="600.0" maxWidth="400.0" minHeight="500.0" minWidth="400.0" prefHeight="500.0" prefWidth="400.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <center>
+                <StackPane maxHeight="365.0" maxWidth="380.0" minHeight="365.0" minWidth="380.0" prefHeight="365.0" prefWidth="380.0">
+                    <children>
+                        <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#ffffff00" height="365.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.5" width="380.0" />
+                        <VBox maxHeight="380.0" maxWidth="380.0" minHeight="380.0" minWidth="380.0" prefHeight="380.0" prefWidth="380.0" StackPane.alignment="CENTER_LEFT">
+                            <children>
+                                <HBox alignment="CENTER_LEFT" maxHeight="50.0" maxWidth="360.0" minHeight="50.0" minWidth="360.0" prefHeight="50.0" prefWidth="360.0" VBox.vgrow="NEVER">
+                                    <VBox.margin>
+                                        <Insets left="10.0" top="30.0" />
+                                    </VBox.margin>
+                                    <children>
+                                        <Label text="Job Name">
+                                            <font>
+                                                <Font size="15.0" />
+                                            </font>
+                                        </Label>
+                                        <TextField fx:id="name" maxHeight="25.0" maxWidth="270.0" minHeight="25.0" minWidth="270.0" prefHeight="25.0" prefWidth="270.0">
+                                            <font>
+                                                <Font size="15.0" />
+                                            </font>
+                                            <HBox.margin>
+                                                <Insets left="10.0" />
+                                            </HBox.margin>
+                                        </TextField>
+                                    </children>
+                                </HBox>
+                                <HBox alignment="CENTER_LEFT" maxHeight="50.0" maxWidth="360.0" minHeight="50.0" minWidth="360.0" prefHeight="50.0" prefWidth="360.0">
+                                    <children>
+                                        <Label text="Wall Time ">
+                                            <font>
+                                                <Font size="15.0" />
+                                            </font>
+                                        </Label>
+                              <Spinner fx:id="hours" maxHeight="25.0" maxWidth="69.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="69.0">
+                                 <valueFactory>
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="47" max="47" min="0" />
+                                 </valueFactory>
+                                 <HBox.margin>
+                                    <Insets left="8.0" />
+                                 </HBox.margin>
+                              </Spinner>
+                              <Spinner fx:id="minutes" maxHeight="25.0" maxWidth="69.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="69.0">
+                                 <valueFactory>
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="59" max="59" min="0" />
+                                 </valueFactory>
+                                 <HBox.margin>
+                                    <Insets left="1.0" />
+                                 </HBox.margin>
+                              </Spinner>
+                              <Spinner fx:id="seconds" maxHeight="25.0" maxWidth="69.0" minHeight="25.0" minWidth="60.0" prefHeight="25.0" prefWidth="69.0">
+                                 <valueFactory>
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="59" max="59" min="0" />
+                                 </valueFactory>
+                                 <HBox.margin>
+                                    <Insets left="1.0" />
+                                 </HBox.margin>
+                              </Spinner>
+                                    </children>
+                                    <VBox.margin>
+                                        <Insets left="10.0" />
+                                    </VBox.margin>
+                                </HBox>
+                                <HBox alignment="CENTER_LEFT" maxHeight="50.0" maxWidth="360.0" minHeight="50.0" minWidth="360.0" prefHeight="50.0" prefWidth="360.0">
+                                    <children>
+                                        <Label text="Queue ">
+                                            <font>
+                                                <Font size="15.0" />
+                                            </font>
+                                        </Label>
+                                        <RadioButton fx:id="thin" mnemonicParsing="false" selected="true" text="Thin">
+                                            <font>
+                                                <Font size="15.0" />
+                                            </font>
+                                            <HBox.margin>
+                                                <Insets left="35.0" />
+                                            </HBox.margin>
+                                            <toggleGroup>
+                                                <ToggleGroup fx:id="queue" />
+                                            </toggleGroup>
+                                        </RadioButton>
+                                        <RadioButton fx:id="fat" mnemonicParsing="false" text="Fat" toggleGroup="$queue">
+                                            <font>
+                                                <Font size="15.0" />
+                                            </font>
+                                            <HBox.margin>
+                                                <Insets left="40.0" />
+                                            </HBox.margin>
+                                        </RadioButton>
+                                        <CheckBox fx:id="month" mnemonicParsing="false" text="1 Month">
+                                            <font>
+                                                <Font size="15.0" />
+                                            </font>
+                                            <HBox.margin>
+                                                <Insets left="30.0" />
+                                            </HBox.margin>
+                                        </CheckBox>
+                                    </children>
+                                    <VBox.margin>
+                                        <Insets left="10.0" />
+                                    </VBox.margin>
+                                </HBox>
+                                <HBox alignment="CENTER_LEFT" maxHeight="50.0" maxWidth="360.0" minHeight="50.0" minWidth="360.0" prefHeight="50.0" prefWidth="360.0">
+                                    <children>
+                                        <Label text="Number Of Nodes">
+                                            <font>
+                                                <Font size="15.0" />
+                                            </font>
+                                        </Label>
+                                        <Spinner fx:id="nodes" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                            <valueFactory>
+                                                <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="1" max="1000" min="1" />
+                                            </valueFactory> 
+                                            <HBox.margin>
+                                                <Insets left="155.0" />
+                                            </HBox.margin>
+                                        </Spinner>
+                                    </children>
+                                    <VBox.margin>
+                                        <Insets left="10.0" />
+                                    </VBox.margin>
+                                </HBox>
+                                <HBox alignment="CENTER_LEFT" maxHeight="50.0" maxWidth="360.0" minHeight="50.0" minWidth="360.0" prefHeight="50.0" prefWidth="360.0">
+                                    <children>
+                                        <Label text="Number Of Threads">
+                                            <font>
+                                                <Font size="15.0" />
+                                            </font>
+                                        </Label>
+                                        <Spinner fx:id="threads" maxWidth="70.0" minWidth="70.0" prefWidth="70.0">
+                                            <valueFactory>
+                                                <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="1" max="1000" min="1" />
+                                            </valueFactory> 
+                                            <HBox.margin>
+                                                <Insets left="143.0" />
+                                            </HBox.margin>
+                                        </Spinner>
+                                    </children>
+                                    <VBox.margin>
+                                        <Insets left="10.0" />
+                                    </VBox.margin>
+                                </HBox>
+                            </children>
+                        </VBox>
+                    </children>
+                    <BorderPane.margin>
+                        <Insets />
+                    </BorderPane.margin>
+                </StackPane>
+            </center>
+            <top>
+                <Pane id="header" maxHeight="70.0" maxWidth="400.0" minHeight="70.0" minWidth="400.0" prefHeight="70.0" prefWidth="400.0">
+                    <BorderPane.margin>
+                        <Insets />
+                    </BorderPane.margin>
+                    <children>
+                        <Label text="PBS" textFill="WHITE">
+                            <padding>
+                                <Insets left="10.0" top="30.0" />
+                            </padding>
+                            <font>
+                                <Font size="17.0" />
+                            </font>
+                        </Label>
+                    </children>
+                </Pane>
+            </top>
+            <bottom>
+                <ButtonBar id="header" maxHeight="50.0" maxWidth="400.0" minHeight="50.0" minWidth="400.0" prefHeight="50.0" prefWidth="400.0" BorderPane.alignment="CENTER">
+                    <buttons>
+                        <Button fx:id="back" maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#back" text="Back" translateX="-240.0" />
+                        <Button fx:id="next" maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#next" text="Next" translateX="-10.0" />
+                    </buttons>
+                </ButtonBar>
+            </bottom>
+        </BorderPane>
+    </children>
+</AnchorPane>
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane id="AnchorPane" maxHeight="500.0" maxWidth="1200.0" minHeight="500.0" minWidth="1200.0" prefHeight="500.0" prefWidth="1200.0" stylesheets="@../Resources/bootstrap3.css" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controllers.ScriptPreviewController">
+   <children>
+      <BorderPane id="header" layoutX="10.0" layoutY="10.0" maxHeight="600.0" maxWidth="400.0" minHeight="500.0" minWidth="400.0" prefHeight="500.0" prefWidth="400.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <top>
+            <Pane id="header" maxHeight="70.0" maxWidth="400.0" minHeight="70.0" minWidth="400.0" prefHeight="70.0" prefWidth="400.0">
+               <BorderPane.margin>
+                  <Insets />
+               </BorderPane.margin>
+               <children>
+                  <Label text="Script Preview" textFill="WHITE">
+                     <padding>
+                        <Insets left="10.0" top="30.0" />
+                     </padding>
+                     <font>
+                        <Font size="17.0" />
+                     </font>
+                  </Label>
+               </children>
+            </Pane>
+         </top>
+         <bottom>
+            <ButtonBar id="header" maxHeight="50.0" maxWidth="1200.0" minHeight="50.0" minWidth="1200.0" prefHeight="50.0" prefWidth="1200.0" BorderPane.alignment="CENTER">
+               <buttons>
+                  <ProgressIndicator fx:id="loadingIndicator" maxHeight="30.0" minHeight="30.0" prefHeight="30.0" style="-fx-accent: black;" translateY="3.0" visible="false" />
+                  <Button fx:id="submit" maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#submit" text="Submit" translateX="-10.0" translateY="4.0" />
+               </buttons>
+            </ButtonBar>
+         </bottom>
+         <center>
+            <VBox maxWidth="1200.0" minWidth="1200.0" prefHeight="200.0" prefWidth="1200.0" BorderPane.alignment="CENTER">
+               <children>
+                  <TextArea fx:id="scriptPreviewField" maxHeight="380.0" maxWidth="1200.0" minHeight="380.0" minWidth="1200.0" prefHeight="380.0" prefWidth="1200.0" />
+               </children>
+            </VBox>
+         </center>
+      </BorderPane>
+   </children>
+</AnchorPane>
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+
+<AnchorPane maxHeight="129.0" maxWidth="473.0" minHeight="129.0" minWidth="473.0" prefHeight="129.0" prefWidth="473.0" stylesheets="@../Resources/bootstrap3.css" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <GridPane alignment="CENTER" stylesheets="@../../bootstrap3.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+          <children>
+              <Label prefHeight="41.0" prefWidth="113.0" text="User Name">
+                  <GridPane.margin>
+                      <Insets left="5.0" />
+                  </GridPane.margin>
+              </Label>
+              <Label prefHeight="143.0" prefWidth="300.0" text="Password" GridPane.rowIndex="1">
+                  <GridPane.margin>
+                      <Insets left="5.0" />
+                  </GridPane.margin>
+              </Label>
+            <HBox GridPane.columnIndex="1">
+               <children>
+                    <TextField id="usernameTF" fx:id="usernameTF" maxHeight="29.0" maxWidth="337.0" minHeight="29.0" minWidth="337.0" prefHeight="29.0" prefWidth="337.0" promptText="Username">
+                     <HBox.margin>
+                        <Insets top="3.0" />
+                     </HBox.margin></TextField>
+                  <ImageView fx:id="errorN" fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true" visible="false">
+                     <image>
+                        <Image url="@../Resources/error.png" />
+                     </image>
+                     <HBox.margin>
+                        <Insets left="5.0" top="10.0" />
+                     </HBox.margin>
+                  </ImageView>
+               </children>
+            </HBox>
+            <HBox GridPane.columnIndex="1" GridPane.rowIndex="1">
+               <children>
+                    <PasswordField fx:id="passwordF" maxHeight="29.0" maxWidth="337.0" minHeight="29.0" minWidth="337.0" prefHeight="29.0" prefWidth="337.0" promptText="Password" />
+                  <ImageView fx:id="errorP" fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true" visible="false">
+                     <image>
+                        <Image url="@../Resources/error.png" />
+                     </image>
+                     <HBox.margin>
+                        <Insets left="5.0" top="8.0" />
+                     </HBox.margin></ImageView>
+               </children>
+            </HBox>
+            <HBox GridPane.columnIndex="1" GridPane.rowIndex="2">
+               <children>
+                    <Button id="Cancel" fx:id="cancelBT" alignment="CENTER" cancelButton="true" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#cancelM" prefHeight="27.0" prefWidth="74.0" text="Cancel" textAlignment="CENTER">
+                     <HBox.margin>
+                        <Insets left="180.0" top="10.0" />
+                     </HBox.margin>
+                    </Button>
+                    <Button id="signInBT" fx:id="signInBT" alignment="CENTER" contentDisplay="RIGHT" defaultButton="true" mnemonicParsing="false" onAction="#SignIn" prefHeight="27.0" prefWidth="74.0" text="Sign In" textAlignment="CENTER">
+                     <HBox.margin>
+                        <Insets left="10.0" top="10.0" />
+                     </HBox.margin>
+                    </Button>
+                  <ProgressIndicator fx:id="progressIndicator" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" prefHeight="25.0" prefWidth="25.0" visible="false">
+                     <HBox.margin>
+                        <Insets left="7.0" top="14.0" />
+                     </HBox.margin>
+                  </ProgressIndicator>
+               </children>
+            </HBox>
+          </children>
+          <columnConstraints>
+              <ColumnConstraints hgrow="SOMETIMES" maxWidth="296.0" minWidth="10.0" prefWidth="88.0" />
+              <ColumnConstraints hgrow="SOMETIMES" maxWidth="528.0" minWidth="10.0" prefWidth="372.0" />
+          </columnConstraints>
+          <rowConstraints>
+              <RowConstraints maxHeight="129.0" minHeight="0.0" prefHeight="41.0" vgrow="SOMETIMES" />
+              <RowConstraints maxHeight="267.0" minHeight="0.0" prefHeight="31.0" vgrow="SOMETIMES" />
+              <RowConstraints maxHeight="348.0" minHeight="10.0" prefHeight="57.0" vgrow="SOMETIMES" />
+          </rowConstraints>
+         <padding>
+            <Insets top="10.0" />
+         </padding>
+      </GridPane>
+   </children>
+</AnchorPane>
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Rectangle?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane id="AnchorPane" maxHeight="500.0" maxWidth="400.0" minHeight="500.0" minWidth="400.0" prefHeight="500.0" prefWidth="400.0" stylesheets="@../Resources/bootstrap3.css" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controllers.TestsSelectionViewController">
+   <children>
+      <BorderPane layoutX="10.0" layoutY="10.0" maxHeight="600.0" maxWidth="400.0" minHeight="500.0" minWidth="400.0" prefHeight="500.0" prefWidth="400.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <center>
+            <StackPane maxHeight="365.0" maxWidth="380.0" minHeight="365.0" minWidth="380.0" prefHeight="365.0" prefWidth="380.0">
+               <children>
+                  <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#ffffff00" height="365.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.5" width="380.0" />
+                  <VBox maxHeight="380.0" maxWidth="380.0" minHeight="380.0" minWidth="380.0" prefHeight="380.0" prefWidth="380.0" StackPane.alignment="CENTER_LEFT">
+                     <children>
+                        <RadioButton fx:id="MotifMatching" mnemonicParsing="false" selected="true" text="Motif Matching">
+                           <padding>
+                              <Insets bottom="10.0" />
+                           </padding>
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                           <font>
+                              <Font size="15.0" />
+                           </font>
+                           <toggleGroup>
+                              <ToggleGroup fx:id="Tests" />
+                           </toggleGroup>
+                        </RadioButton>
+                        <RadioButton fx:id="MotifScanning" mnemonicParsing="false" text="Fast Motif Discovery" toggleGroup="$Tests">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                           <font>
+                              <Font size="15.0" />
+                           </font>
+                        </RadioButton>
+                        <RadioButton fx:id="motifDiscovery" mnemonicParsing="false" text="Motif Discovery" toggleGroup="$Tests">
+                           <padding>
+                              <Insets bottom="10.0" top="20.0" />
+                           </padding>
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                           <font>
+                              <Font size="15.0" />
+                           </font>
+                        </RadioButton>
+                     </children>
+                     <StackPane.margin>
+                        <Insets top="40.0" />
+                     </StackPane.margin>
+                  </VBox>
+               </children>
+               <BorderPane.margin>
+                  <Insets top="10.0" />
+               </BorderPane.margin>
+            </StackPane>
+         </center>
+         <top>
+            <Pane id="header" maxHeight="70.0" maxWidth="400.0" minHeight="70.0" minWidth="400.0" prefHeight="70.0" prefWidth="400.0">
+               <BorderPane.margin>
+                  <Insets />
+               </BorderPane.margin>
+               <children>
+                  <Label text="Please Select A Test" textFill="WHITE">
+                     <padding>
+                        <Insets left="10.0" top="30.0" />
+                     </padding>
+                     <font>
+                        <Font size="17.0" />
+                     </font>
+                  </Label>
+               </children>
+            </Pane>
+         </top>
+         <bottom>
+            <ButtonBar maxHeight="50.0" maxWidth="400.0" minHeight="50.0" minWidth="400.0" prefHeight="50.0" prefWidth="400.0" BorderPane.alignment="CENTER">
+               <buttons>
+                  <ProgressIndicator fx:id="loadingIndicator" maxHeight="35.0" minHeight="35.0" prefHeight="35.0" visible="false" />
+                  <Button fx:id="next" maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#next" text="Next" translateX="-10.0" />
+               </buttons>
+            </ButtonBar>
+         </bottom>
+      </BorderPane>
+   </children>
+</AnchorPane>
